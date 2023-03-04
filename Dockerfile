@@ -5,7 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o ./out/polar main.go
+RUN go build -o ./out/polar -ldflags "-s -w" main.go
 
 FROM alpine AS judge-env
 
