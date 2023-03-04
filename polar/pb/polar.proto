@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package arctic;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "arctic/polar/pb";
+
+service Polar {
+    rpc Health (google.protobuf.Empty) returns (PolarHealth);
+    rpc Judge (File) returns (stream JudgeResult);
+}
+
+message Metadata {
+    oneof metadata {
+        google.protobuf.Empty empty = 1;
+        CppVersion version = 2;
+    }
+    enum CppVersion {
+        CPP_98 = 0;
+        CPP_11 = 1;
+        CPP_14 = 2;
+        CPP_17 = 3;
+        CPP_20 = 4;
+    }
+}
+
+message File {
+    Metadata metadata = 1;
+    enum Language {
+        C = 0;
+        CPP = 1;
+        PASCAL = 2;
+        PYTHON_3 = 3;
+        PYPY_3 = 4;
+        GO = 5;
+    }
+    bytes buffer = 2;
+    Language language = 3;
+}
+
+message JudgeResult {
+    enum Verdict {
+        ACCEPTED = 0;
+        WRONG_ANSWER = 1;
+        TIME_LIMIT_EXCEEDED = 2;
+        MEMORY_LIMIT_EXCEEDED = 3;
+        RUNTIME_ERROR = 4;
+    }
+    uint32 test_number = 1;
+    uint64 memory = 2;
+    double duration = 3;
+    Verdict verdict = 4;
+    uint32 point = 5;
+}
+
+message Specifications {
+    bool is_laptop = 1;
+    string os = 2;
+    string cpu = 3;
+    double mem = 4;
+}
+
+message PolarHealth {
+    google.protobuf.Timestamp boot_timestamp = 1;
+    string version = 2;
+    Specifications specs = 3;
+}
