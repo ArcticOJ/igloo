@@ -7,9 +7,9 @@ RUN go mod download
 COPY . .
 RUN go build -o ./out/polar -ldflags "-s -w" main.go
 
-FROM alpine AS judge-env
+FROM golang:alpine AS judge-env
 
-RUN apk add go gcc python3 fpc pypy3 clang --no-cache \
+RUN apk add gcc python3 fpc pypy3 clang --no-cache \
   --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing \
   --repository https://dl-cdn.alpinelinux.org/alpine/edge/main
 
