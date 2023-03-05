@@ -3,6 +3,7 @@ on:
   push:
     branches: [ bleeding-edge, mainline ]
     paths:
+      - '.github/workflows/*.yml'
       - 'polar/**.go'
       - 'main.go'
       - 'go.mod'
@@ -19,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v4
