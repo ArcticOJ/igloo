@@ -4,7 +4,7 @@ on:
     branches: [ bleeding-edge, mainline ]
     paths:
       - '.github/workflows/*.yml'
-      - 'polar/**.go'
+      - 'igloo/**.go'
       - 'main.go'
       - 'go.mod'
       - 'go.sum'
@@ -26,7 +26,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            alphanecron/polar
+            alphanecron/igloo
           tags: |
             type=schedule
             type=ref,event=branch

@@ -2,7 +2,7 @@ package sys
 
 import (
 	"fmt"
-	"polar/polar/utils"
+	"igloo/igloo/utils"
 	"strings"
 )
 
@@ -13,7 +13,7 @@ func GetOs() string {
 	}
 	prodVer, err := utils.Invoke("sw_vers", "-productVersion")
 	if err != nil {
-		return strings.TrimSpace(string(prodName))
+		return strings.TrimSpace(prodName)
 	}
-	return fmt.Sprintf("%s %s", strings.TrimSpace(string(prodName)), strings.TrimSpace(string(prodVer)))
+	return fmt.Sprintf("%s %s", strings.TrimSpace(prodName), strings.TrimSpace(prodVer))
 }

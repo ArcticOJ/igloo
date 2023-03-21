@@ -1,7 +1,17 @@
 package main
 
-import "polar/polar"
+import (
+	"igloo/igloo"
+	"log"
+	"runtime"
+)
+
+func init() {
+	if runtime.GOOS != "linux" {
+		log.Fatalln("Unsupported platform. Try using Docker instead.")
+	}
+}
 
 func main() {
-	polar.Start()
+	igloo.Start()
 }

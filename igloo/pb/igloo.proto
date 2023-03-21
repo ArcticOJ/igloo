@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package arctic;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "arctic/igloo/pb";
+
+service Igloo {
+    rpc Alive(google.protobuf.Empty) returns (google.protobuf.BoolValue);
+    rpc Specification (google.protobuf.Empty) returns (InstanceSpecification);
+    rpc Judge (File) returns (stream JudgeResult);
+}
+
+message Constraints {
+    uint64 mem = 1;
+    uint64 cpu = 2;
+    uint64 duration = 3;
+    string language = 4;
+}
+
+message File {
+    string id = 1;
+    Constraints constraints = 2;
+    bytes buffer = 3;
+}
+
+message JudgeResult {
+    enum Verdict {
+        ACCEPTED = 0;
+        WRONG_ANSWER = 1;
+        TIME_LIMIT_EXCEEDED = 2;
+        MEMORY_LIMIT_EXCEEDED = 3;
+        RUNTIME_ERROR = 4;
+        DISALLOWED_SYSCALL = 5;
+    }
+    uint32 test_number = 1;
+    uint64 memory = 2;
+    double duration = 3;
+    Verdict verdict = 4;
+    uint32 point = 5;
+}
+
+message Runtime {
+    string name = 1;
+    string key = 2;
+    string command = 3;
+    string arguments = 4;
+    string version = 5;
+}
+
+message InstanceSpecification {
+    google.protobuf.Timestamp boot_timestamp = 1;
+    string version = 2;
+    string os = 3;
+    string cpu = 4;
+    double mem = 5;
+    repeated Runtime runtimes = 6;
+}
