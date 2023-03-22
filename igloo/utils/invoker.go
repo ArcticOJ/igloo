@@ -3,12 +3,10 @@ package utils
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"os/exec"
 )
 
 func Invoke(name string, args ...string) (string, error) {
-	fmt.Println(name, args)
 	cmd := exec.CommandContext(context.Background(), name, args...)
 
 	var buf bytes.Buffer

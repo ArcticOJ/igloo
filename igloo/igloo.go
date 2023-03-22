@@ -15,6 +15,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sort"
 	"storj.io/drpc/drpcmux"
 	"time"
 )
@@ -64,6 +65,9 @@ func GetSpecs() (specs pb.InstanceSpecification) {
 			Version:   comp.Version,
 		})
 	}
+	sort.Slice(runtimes, func(i, j int) bool {
+		return runtimes[i].Key < runtimes[j].Key
+	})
 	specs.Runtimes = runtimes
 	if memInfo, e := mem.VirtualMemory(); e != nil {
 		specs.Mem = -1

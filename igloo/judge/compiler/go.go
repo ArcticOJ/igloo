@@ -22,7 +22,7 @@ func Go() *Compiler {
 	return &Compiler{
 		Name:       "Go",
 		Command:    "go",
-		Arguments:  "build -o %s %s",
+		Arguments:  "build -o {{input}} {{output}}",
 		Extensions: []string{"go"},
 		Version:    goVersion,
 	}

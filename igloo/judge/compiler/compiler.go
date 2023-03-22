@@ -27,8 +27,9 @@ type Compiler struct {
 	Arguments  string   `json:"arguments"`
 }
 
-func (compiler *Compiler) BuildCommand(file, output string) (string, []string) {
-	return compiler.Command, strings.Split(fmt.Sprintf(compiler.Arguments, output, file), " ")
+func (compiler *Compiler) BuildCommand(inp, output string) (string, []string) {
+	r := strings.NewReplacer("{{input}}", inp, "{{output}}", output)
+	return compiler.Command, strings.Split(r.Replace(compiler.Arguments), " ")
 }
 
 func (compiler *Compiler) CompileAndRun(file *pb.File) {
@@ -46,6 +47,4 @@ func (compiler *Compiler) CompileAndRun(file *pb.File) {
 		Verbose:       true,
 		Type:          judge.Cpp,
 	}, []string{targetOut}))
-
-	//}, []string{compiler.Command, fmt.Sprintf(compiler.Arguments, "/tmp/submission.py")}))
 }

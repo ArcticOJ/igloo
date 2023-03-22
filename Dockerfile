@@ -1,6 +1,6 @@
 # TODO: Add Windoze support
 
-FROM golang:alpine AS builder
+FROM golang:bullseye AS builder
 WORKDIR /usr/src/app
 
 COPY go.mod go.sum ./
@@ -9,7 +9,7 @@ RUN go mod download
 COPY . .
 RUN go build -o ./out/igloo -ldflags "-s -w" main.go
 
-FROM golang:alpine AS judge-env
+FROM golang:bullseye AS judge-env
 
 RUN apk add gcc python3 fpc pypy3 clang --no-cache \
   --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing \

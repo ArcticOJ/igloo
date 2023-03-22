@@ -36,7 +36,7 @@ func cpp(name, std string) *Compiler {
 	return &Compiler{
 		Name:       name,
 		Command:    "g++",
-		Arguments:  fmt.Sprintf("-std=%s -o %%s -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s %%s", std),
+		Arguments:  fmt.Sprintf("-std=%s -o {{output}} -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s {{input}}", std),
 		Extensions: []string{"cpp"},
 		Version:    gccVersion,
 	}

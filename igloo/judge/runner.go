@@ -3,6 +3,7 @@ package judge
 import (
 	"context"
 	"fmt"
+	"github.com/criyle/go-sandbox/pkg/memfd"
 	"igloo/igloo/judge/config"
 	"os"
 	"os/signal"
@@ -14,7 +15,7 @@ import (
 	"github.com/criyle/go-sandbox/runner/ptrace"
 )
 
-const pathEnv = "PATH=/usr/local/bin:/usr/bin:/bin"
+const pathEnv, userEnv, hostnameEnv = "PATH=/usr/local/bin:/usr/bin:/bin", "USER=igloo", "hostname=igloo-sandbox"
 
 type Status int
 
@@ -81,7 +82,8 @@ func Start(conf *Config, argv []string) (*runner.Result, error) {
 	}
 	actionDefault := libseccomp.ActionKill
 	if conf.Verbose {
-		actionDefault |= libseccomp.ActionTrace
+		// TODO: change to |=
+		actionDefault = libseccomp.ActionTrace
 	}
 	builder := libseccomp.Builder{
 		Allow:   allow,
@@ -101,10 +103,20 @@ func Start(conf *Config, argv []string) (*runner.Result, error) {
 	syncFunc := func(pid int) error {
 		return nil
 	}
-	var execFile uintptr
+	fin, err := os.Open(args[0])
+	if err != nil {
+		return nil, fmt.Errorf("filed to open args[0]: %v", err)
+	}
+	execf, err := memfd.DupToMemfd("run_program", fin)
+	if err != nil {
+		return nil, fmt.Errorf("dup to memfd failed: %v", err)
+	}
+	fin.Close()
+	defer execf.Close()
+	execFile := execf.Fd()
 	r := &ptrace.Runner{
 		Args:        args,
-		Env:         []string{pathEnv},
+		Env:         []string{pathEnv, userEnv, hostnameEnv},
 		ExecFile:    execFile,
 		RLimits:     rlims.PrepareRLimit(),
 		Limit:       limit,
@@ -136,11 +148,9 @@ func Start(conf *Config, argv []string) (*runner.Result, error) {
 		cancel()
 		rt = <-s
 		rt.Status = runner.StatusRunnerError
-
 	case rt = <-s:
 	}
 	eTime := time.Now()
-
 	if rt.SetUpTime == 0 {
 		rt.SetUpTime = rTime.Sub(sTime)
 		rt.RunningTime = eTime.Sub(rTime)
