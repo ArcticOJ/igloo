@@ -20,10 +20,11 @@ func getPy3Version() string {
 
 func Py3() *Compiler {
 	return &Compiler{
-		Name:       "Python 3",
-		Command:    "python3",
-		Arguments:  "-I -B {{input}}",
-		Extensions: []string{"py"},
-		Version:    py3Version,
+		Name:                "Python 3",
+		Command:             "python3",
+		TimeLimitMultiplier: 1,
+		Arguments:           "-I -B {{input}}",
+		Extensions:          []string{"py"},
+		Version:             py3Version,
 	}
 }

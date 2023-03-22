@@ -54,7 +54,7 @@ func getStatus(s runner.Status) int {
 
 func Start(conf *Config, argv []string) (*runner.Result, error) {
 	var rt runner.Result
-	args, allow, trace, h := config.GetConf(conf.Type, "/tmp/", argv, []string{}, []string{}, false)
+	args, allow, trace, h := config.GetConf(conf.Type, conf.WorkDir, argv, []string{}, []string{}, false)
 	inpFile, outFile, errFile := conf.getIO()
 	files, err := prepareFiles(inpFile, outFile, errFile)
 	if err != nil {
@@ -122,7 +122,7 @@ func Start(conf *Config, argv []string) (*runner.Result, error) {
 		Limit:       limit,
 		Files:       fds,
 		Seccomp:     filter,
-		WorkDir:     "/tmp",
+		WorkDir:     conf.WorkDir,
 		ShowDetails: conf.Verbose,
 		Unsafe:      false,
 		Handler:     h,

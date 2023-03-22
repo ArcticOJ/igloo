@@ -22,6 +22,7 @@ type Config struct {
 	IOFileName    string
 	Type          ProcessType
 	Verbose       bool
+	WorkDir       string
 }
 
 func (config *Config) getIO() (input, output, err string) {

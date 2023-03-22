@@ -34,10 +34,11 @@ func getGccVersion() string {
 
 func cpp(name, std string) *Compiler {
 	return &Compiler{
-		Name:       name,
-		Command:    "g++",
-		Arguments:  fmt.Sprintf("-std=%s -o {{output}} -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s {{input}}", std),
-		Extensions: []string{"cpp"},
-		Version:    gccVersion,
+		Name:                name,
+		Command:             "g++",
+		TimeLimitMultiplier: 1,
+		Arguments:           fmt.Sprintf("-std=%s -o {{output}} -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s {{input}}", std),
+		Extensions:          []string{"cpp"},
+		Version:             gccVersion,
 	}
 }

@@ -8,7 +8,7 @@ import (
 
 func init() {
 	if runtime.GOOS != "linux" {
-		log.Fatalln("Unsupported platform. Try using Docker instead.")
+		log.Fatalln("Unsupported platform. Try using Docker image instead.")
 	}
 }
 

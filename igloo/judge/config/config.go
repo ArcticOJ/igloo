@@ -121,9 +121,8 @@ var (
 			Syscall: SyscallConfig{
 				ExtraAllow: []string{
 					"futex", "getdents", "getdents64", "prlimit64", "gettid",
-					"getpid", "getrandom", "newfstatat",
+					"getpid", "getrandom",
 				},
-
 				ExtraCount: map[string]int{
 					"rseq":            2,
 					"set_tid_address": 2,
@@ -135,6 +134,11 @@ var (
 					"/etc/ld.so.cache",
 					"/etc/ld.so.preload",
 					"/usr/lib/*",
+				},
+				// TODO: remove ability to stat ./*
+				ExtraStat: []string{
+					"/usr/lib/*",
+					"./*",
 				},
 			},
 		},

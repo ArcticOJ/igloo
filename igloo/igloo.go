@@ -84,7 +84,6 @@ func GetSpecs() (specs pb.InstanceSpecification) {
 
 func Start() {
 	mux := drpcmux.New()
-	//_ = judge.InitEnv()
 	e := pb.DRPCRegisterIgloo(mux, &Server{
 		Specs: GetSpecs(),
 	})
@@ -97,6 +96,5 @@ func Start() {
 	}
 	igloo := muxserver.New(mux)
 	Logger.Info().Msgf("Listening on %s", ":1727")
-	defer lis.Close()
 	log.Fatalln(igloo.Serve(context.Background(), lis))
 }

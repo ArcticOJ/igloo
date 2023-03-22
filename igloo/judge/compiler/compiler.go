@@ -20,11 +20,12 @@ var Compilers = map[string]*Compiler{
 }
 
 type Compiler struct {
-	Name       string   `json:"name"`
-	Version    string   `json:"version"`
-	Extensions []string `json:"extensions"`
-	Command    string   `json:"program"`
-	Arguments  string   `json:"arguments"`
+	Name                string   `json:"name"`
+	Version             string   `json:"version"`
+	Extensions          []string `json:"extensions"`
+	Command             string   `json:"program"`
+	Arguments           string   `json:"arguments"`
+	TimeLimitMultiplier uint8    `json:"timeLimitMultiplier"`
 }
 
 func (compiler *Compiler) BuildCommand(inp, output string) (string, []string) {
@@ -36,12 +37,14 @@ func (compiler *Compiler) CompileAndRun(file *pb.File) {
 	targetOut := fmt.Sprintf("/tmp/%s", file.Id)
 	fmt.Println(os.WriteFile(targetOut+".cpp", file.Buffer, 0755))
 	cmd, args := compiler.BuildCommand(targetOut+".cpp", targetOut)
+	trueTimeLimit := file.Constraints.Duration * uint64(compiler.TimeLimitMultiplier)
 	fmt.Println(utils.Invoke(cmd, args...))
 	fmt.Println(judge.Start(&judge.Config{
-		IOFileName:    "/tmp/HELLOWORLD",
+		IOFileName:    "/data/Dev/mock/MOCK",
+		WorkDir:       "/tmp/",
 		MemoryLimit:   file.Constraints.Mem << 20,
-		TimeLimit:     file.Constraints.Duration,
-		TimeLimitHard: file.Constraints.Duration + 2,
+		TimeLimit:     trueTimeLimit,
+		TimeLimitHard: trueTimeLimit + 2,
 		StackLimit:    1024 << 20,
 		OutputLimit:   64 << 20,
 		Verbose:       true,

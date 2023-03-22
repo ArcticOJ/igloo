@@ -20,10 +20,11 @@ func getGoVersion() string {
 
 func Go() *Compiler {
 	return &Compiler{
-		Name:       "Go",
-		Command:    "go",
-		Arguments:  "build -o {{input}} {{output}}",
-		Extensions: []string{"go"},
-		Version:    goVersion,
+		Name:                "Go",
+		Command:             "go",
+		TimeLimitMultiplier: 1,
+		Arguments:           "build -o {{input}} {{output}}",
+		Extensions:          []string{"go"},
+		Version:             goVersion,
 	}
 }
