@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/criyle/go-sandbox/pkg/memfd"
 	"igloo/igloo/judge/config"
+	"igloo/igloo/utils"
 	"os"
 	"os/signal"
 	"time"
@@ -21,14 +22,15 @@ type Status int
 
 // UOJ run_program constants
 const (
-	StatusNormal  Status = iota // 0
-	StatusInvalid               // 1
-	StatusRE                    // 2
-	StatusMLE                   // 3
-	StatusTLE                   // 4
-	StatusOLE                   // 5
-	StatusBan                   // 6
-	StatusFatal                 // 7
+	StatusNormal Status = iota
+	StatusInvalid
+	StatusRE
+	StatusMLE
+	StatusTLE
+	StatusOLE
+	StatusBan
+	StatusFatal
+	StatusRunnerError
 )
 
 func getStatus(s runner.Status) int {
@@ -52,11 +54,20 @@ func getStatus(s runner.Status) int {
 	}
 }
 
-func Start(conf *Config, argv []string) (*runner.Result, error) {
-	var rt runner.Result
-	args, allow, trace, h := config.GetConf(conf.Type, conf.WorkDir, argv, []string{}, []string{}, false)
-	inpFile, outFile, errFile := conf.getIO()
-	files, err := prepareFiles(inpFile, outFile, errFile)
+type Instance struct {
+	config *Config
+}
+
+func New(conf *Config) (*Instance, error) {
+	return &Instance{
+		config: conf,
+	}, nil
+}
+
+func (instance *Instance) Judge(input []byte, argv []string) (*runner.Result, error) {
+	args, allow, trace, h := config.GetConf(instance.config.Type, instance.config.WorkDir, argv, []string{}, []string{}, false)
+	inp, outFile, errFile := instance.config.getIO(input)
+	files, err := prepareFiles(inp, outFile, errFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare files: %v", err)
 	}
@@ -72,17 +83,16 @@ func Start(conf *Config, argv []string) (*runner.Result, error) {
 	}
 
 	rlims := rlimit.RLimits{
-		CPU:         conf.TimeLimit,
-		CPUHard:     conf.TimeLimitHard,
-		FileSize:    conf.OutputLimit,
-		Stack:       conf.StackLimit,
-		Data:        conf.MemoryLimit,
+		CPU:         uint64(instance.config.TimeLimit),
+		CPUHard:     uint64(instance.config.TimeLimitHard),
+		FileSize:    instance.config.OutputLimit,
+		Stack:       instance.config.StackLimit,
+		Data:        instance.config.MemoryLimit,
 		OpenFile:    256,
 		DisableCore: true,
 	}
 	actionDefault := libseccomp.ActionKill
-	if conf.Verbose {
-		// TODO: change to |=
+	if instance.config.Verbose {
 		actionDefault = libseccomp.ActionTrace
 	}
 	builder := libseccomp.Builder{
@@ -96,8 +106,8 @@ func Start(conf *Config, argv []string) (*runner.Result, error) {
 	}
 
 	limit := runner.Limit{
-		TimeLimit:   time.Duration(conf.TimeLimit) * time.Second,
-		MemoryLimit: runner.Size(conf.MemoryLimit),
+		TimeLimit:   time.Duration(instance.config.TimeLimit) * time.Second,
+		MemoryLimit: runner.Size(instance.config.MemoryLimit),
 	}
 
 	syncFunc := func(pid int) error {
@@ -122,19 +132,22 @@ func Start(conf *Config, argv []string) (*runner.Result, error) {
 		Limit:       limit,
 		Files:       fds,
 		Seccomp:     filter,
-		WorkDir:     conf.WorkDir,
-		ShowDetails: conf.Verbose,
+		WorkDir:     instance.config.WorkDir,
+		ShowDetails: instance.config.Verbose,
 		Unsafe:      false,
 		Handler:     h,
 		SyncFunc:    syncFunc,
 	}
+	var rt runner.Result
+
 	// gracefully shutdown
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
 	// Run tracer
 	sTime := time.Now()
-	c, cancel := context.WithTimeout(context.Background(), time.Duration(int64(conf.TimeLimit+2)*int64(time.Second)))
+	// TODO: ensure that hard time limit is working properly
+	c, cancel := context.WithTimeout(context.Background(), time.Duration(int64(instance.config.TimeLimit+2)*int64(time.Second)))
 	defer cancel()
 
 	s := make(chan runner.Result, 1)
@@ -156,4 +169,18 @@ func Start(conf *Config, argv []string) (*runner.Result, error) {
 		rt.RunningTime = eTime.Sub(rTime)
 	}
 	return &rt, nil
+}
+
+func (instance *Instance) Collect() (string, string, error) {
+	_, fout, ferr := instance.config.getIO(nil)
+	out, e := os.ReadFile(fout)
+	if e != nil {
+		return "", "", e
+	}
+	err, e := os.ReadFile(ferr)
+	if e != nil {
+		return "", "", e
+	}
+	defer utils.Clean(fout, ferr)
+	return string(out), string(err), nil
 }

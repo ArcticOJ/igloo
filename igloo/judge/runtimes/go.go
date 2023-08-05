@@ -1,30 +1,29 @@
-package compiler
+package definitions
 
 import (
+	"igloo/igloo/judge/runtimes"
 	"igloo/igloo/utils"
-	"regexp"
 )
 
 var goVersion = getGoVersion()
 
-var goVerPattern = regexp.MustCompile(`go version go(?P<Version>([0-9].[0-9]+(.[0-9]+)?))`)
+var goVerRegex = utils.NewRegex(`go version go(?P<Version>([0-9].[0-9]+(.[0-9]+)?))`)
 
 func getGoVersion() string {
 	output, e := utils.Invoke("go", "version")
 	if e != nil {
 		return "unknown"
 	}
-	version := goVerPattern.FindStringSubmatch(output)[goVerPattern.SubexpIndex("Version")]
-	return version
+	return goVerRegex.Submatch(output).Find("Version")
 }
 
-func Go() *Compiler {
-	return &Compiler{
+func Go() *runtimes.Runtime {
+	return &runtimes.Runtime{
 		Name:                "Go",
 		Command:             "go",
 		TimeLimitMultiplier: 1,
 		Arguments:           "build -o {{input}} {{output}}",
-		Extensions:          []string{"go"},
+		Extension:           "go",
 		Version:             goVersion,
 	}
 }

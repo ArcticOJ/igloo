@@ -4,6 +4,7 @@ package arctic;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "arctic/igloo/pb";
@@ -11,36 +12,54 @@ option go_package = "arctic/igloo/pb";
 service Igloo {
     rpc Alive(google.protobuf.Empty) returns (google.protobuf.BoolValue);
     rpc Specification (google.protobuf.Empty) returns (InstanceSpecification);
-    rpc Judge (File) returns (stream JudgeResult);
+    rpc Judge (Submission) returns (stream JudgeResult);
 }
 
-message Constraints {
-    uint64 mem = 1;
-    uint64 cpu = 2;
-    uint64 duration = 3;
-    string language = 4;
-}
-
-message File {
+message Case {
     string id = 1;
-    Constraints constraints = 2;
-    bytes buffer = 3;
+    bytes input = 2;
+    bytes expectedOutput = 3;
+    uint32 duration = 4;
+}
+
+message Submission {
+    string id = 1;
+    uint64 mem = 2;
+    uint32 cpu = 3;
+    string language = 4;
+    bytes buffer = 6;
+    repeated Case cases = 7;
+}
+
+enum Verdict {
+    ACCEPTED = 0;
+    WRONG_ANSWER = 1;
+    INVALID_SUBMISSION = 2;
+    TIME_LIMIT_EXCEEDED = 3;
+    MEMORY_LIMIT_EXCEEDED = 4;
+    OUTPUT_STACK_EXCEEDED = 5;
+    RUNTIME_ERROR = 6;
+    DISALLOWED_SYSCALL = 7;
+    INTERNAL_SERVER_ERROR = 8;
+    COMPILATION_ERROR = 9;
+    REJECTED = 10;
+}
+
+enum Type {
+    CASE = 0;
+    FINAL = 1;
 }
 
 message JudgeResult {
-    enum Verdict {
-        ACCEPTED = 0;
-        WRONG_ANSWER = 1;
-        TIME_LIMIT_EXCEEDED = 2;
-        MEMORY_LIMIT_EXCEEDED = 3;
-        RUNTIME_ERROR = 4;
-        DISALLOWED_SYSCALL = 5;
-    }
-    uint32 test_number = 1;
+    string id = 1;
     uint64 memory = 2;
-    double duration = 3;
-    Verdict verdict = 4;
-    uint32 point = 5;
+    string compiler_output = 3;
+    string stdout = 4;
+    string stderr = 5;
+    google.protobuf.Duration duration = 6;
+    Verdict verdict = 7;
+    Type type = 8;
+    bool exitOnError = 9;
 }
 
 message Runtime {

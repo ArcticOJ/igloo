@@ -23,7 +23,9 @@ var (
 		"/usr/lib/x86_64-linux-gnu/",
 	}
 
-	archSyscallAllows []string
+	archSyscallAllows = []string{
+		"newfstatat",
+	}
 
 	archSyscallTraces []string
 
@@ -47,6 +49,7 @@ var (
 		"fcntl",
 		"fadvise64",
 		"pread64",
+		"preadv",
 		"pwrite64",
 
 		// memory action
@@ -133,12 +136,11 @@ var (
 				ExtraRead: []string{
 					"/etc/ld.so.cache",
 					"/etc/ld.so.preload",
-					"/usr/lib/*",
+					"/usr/lib/",
+					"/lib/",
 				},
-				// TODO: remove ability to stat ./*
 				ExtraStat: []string{
-					"/usr/lib/*",
-					"./*",
+					"/usr/lib/",
 				},
 			},
 		},

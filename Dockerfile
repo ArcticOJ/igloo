@@ -1,4 +1,7 @@
-# TODO: Add Windoze support
+# TODO: implement tiered docker images
+# tier 1: gcc python3 python2 clang fpc pypy3 go
+# tier 2: more runtimes such as kotlin, java, csharp, etc..
+# tier 3: rarely used languages like brainfuck, whitespace, moo, ...
 
 FROM golang:alpine AS builder
 WORKDIR /usr/src/app

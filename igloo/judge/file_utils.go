@@ -1,12 +1,16 @@
 package judge
 
-import "os"
+import (
+	"github.com/criyle/go-sandbox/pkg/memfd"
+	"io"
+	"os"
+)
 
-func prepareFiles(inputFile, outputFile, errorFile string) ([]*os.File, error) {
+func prepareFiles(input io.Reader, outputFile, errorFile string) ([]*os.File, error) {
 	var err error
 	files := make([]*os.File, 3)
-	if inputFile != "" {
-		files[0], err = os.OpenFile(inputFile, os.O_RDONLY, 0755)
+	if input != nil {
+		files[0], err = memfd.DupToMemfd("input", input)
 		if err != nil {
 			goto openerr
 		}

@@ -1,37 +1,36 @@
 package judge
 
 import (
-	"fmt"
+	"bytes"
+	"io"
 )
 
 type ProcessType = string
 
 const (
-	Compiler ProcessType = "compiler"
+	Compiler ProcessType = "runtimes"
 	Normal               = "normal"
 	Python3              = "python3"
 	Cpp                  = "cpp"
 )
 
 type Config struct {
-	TimeLimit     uint64
-	TimeLimitHard uint64
+	Target        string
+	TimeLimit     uint32
+	TimeLimitHard uint32
 	MemoryLimit   uint64
 	OutputLimit   uint64
 	StackLimit    uint64
-	IOFileName    string
+	OutErrPath    string
 	Type          ProcessType
 	Verbose       bool
 	WorkDir       string
 }
 
-func (config *Config) getIO() (input, output, err string) {
-	if config.IOFileName == "" {
-		return "", "", ""
+func (config *Config) getIO(input []byte) (inp io.Reader, out, err string) {
+	out, err = config.OutErrPath+".OUT", config.OutErrPath+".ERR"
+	if input != nil {
+		inp = bytes.NewReader(input)
 	}
-	file := config.IOFileName
-	input = fmt.Sprintf("%s.INP", file)
-	output = fmt.Sprintf("%s.OUT", file)
-	err = fmt.Sprintf("%s.ERR", file)
 	return
 }
