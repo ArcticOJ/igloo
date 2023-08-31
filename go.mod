@@ -3,28 +3,22 @@ module igloo
 go 1.19
 
 require (
-	github.com/criyle/go-sandbox v0.9.15
+	github.com/criyle/go-sandbox v0.9.16
 	github.com/dekobon/distro-detect v0.0.0-20230416173418-bee8492482d7
-	github.com/rs/zerolog v1.29.1
-	github.com/shirou/gopsutil/v3 v3.23.4
-	go.arsenm.dev/drpc v0.0.0-20230328202554-c1f2aa71e794
-	google.golang.org/protobuf v1.30.0
-	storj.io/drpc v0.0.33
+	github.com/orcaman/concurrent-map/v2 v2.0.1
+	github.com/rabbitmq/amqp091-go v1.8.1
+	github.com/redis/rueidis v1.0.16
+	github.com/rs/zerolog v1.30.0
+	github.com/uptrace/bunrouter v1.0.20
+	github.com/vmihailenco/msgpack/v5 v5.3.5
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	github.com/elastic/go-seccomp-bpf v1.3.0 // indirect
-	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/hashicorp/yamux v0.1.1 // indirect
-	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/shoenig/go-m1cpu v0.1.5 // indirect
-	github.com/tklauser/go-sysconf v0.3.11 // indirect
-	github.com/tklauser/numcpus v0.6.0 // indirect
-	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	github.com/zeebo/errs v1.2.2 // indirect
-	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	github.com/Jeffail/tunny v0.1.4 // indirect
+	github.com/kr/pretty v0.2.1 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 )

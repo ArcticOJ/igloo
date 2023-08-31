@@ -1,17 +1,23 @@
 package main
 
 import (
-	"igloo/igloo"
-	"log"
-	"runtime"
+	"context"
+	"igloo/igloo/global"
+	"igloo/igloo/http"
+	"igloo/igloo/judge/worker"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
-func init() {
-	if runtime.GOOS != "linux" {
-		log.Fatalln("Unsupported platform. Try using Docker image instead.")
-	}
-}
-
 func main() {
-	igloo.Start()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	global.Worker = worker.New(ctx)
+	go func() {
+		<-ctx.Done()
+		global.Worker.Destroy()
+	}()
+	go http.StartServer(ctx)
+	global.Worker.Work()
 }

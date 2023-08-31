@@ -1,29 +1,23 @@
-package definitions
+package runtimes
 
 import (
-	"igloo/igloo/judge/runtimes"
 	"igloo/igloo/utils"
 )
 
-var goVersion = getGoVersion()
-
 var goVerRegex = utils.NewRegex(`go version go(?P<Version>([0-9].[0-9]+(.[0-9]+)?))`)
 
-func getGoVersion() string {
-	output, e := utils.Invoke("go", "version")
+func getGoVersion() (string, error) {
+	output, e := utils.InvokeStdout("go", "version")
 	if e != nil {
-		return "unknown"
+		return "", e
 	}
-	return goVerRegex.Submatch(output).Find("Version")
+	return goVerRegex.Submatch(output).Find("Version"), nil
 }
 
-func Go() *runtimes.Runtime {
-	return &runtimes.Runtime{
-		Name:                "Go",
-		Command:             "go",
-		TimeLimitMultiplier: 1,
-		Arguments:           "build -o {{input}} {{output}}",
-		Extension:           "go",
-		Version:             goVersion,
+func Go() *Runtime {
+	return &Runtime{
+		Program:    "go",
+		Arguments:  "build -x -o {{output}} {{input}}",
+		getVersion: getGoVersion,
 	}
 }
