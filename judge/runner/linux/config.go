@@ -5,7 +5,7 @@ import (
 	"github.com/criyle/go-sandbox/container"
 	"github.com/criyle/go-sandbox/pkg/mount"
 	"gopkg.in/yaml.v2"
-	"igloo/igloo/logger"
+	"igloo/logger"
 	"os"
 	"path"
 )

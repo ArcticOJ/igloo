@@ -2,13 +2,12 @@ package config
 
 import (
 	"gopkg.in/yaml.v2"
-	"igloo/igloo/logger"
+	"igloo/logger"
 	"os"
 )
 
 type (
 	IglooConfig struct {
-		Address     `yaml:",inline"`
 		ID          string
 		Key         string
 		Parallelism int16
@@ -16,17 +15,16 @@ type (
 		RabbitMQ    *RabbitMQConfig
 	}
 	RabbitMQConfig struct {
-		Username string
-		Password string
-		Address  `yaml:",inline"`
+		Username   string
+		Password   string
+		Host       string
+		Port       uint16
+		StreamPort uint16 `yaml:"streamPort"`
+		VHost      string
 	}
 	StorageConfig struct {
 		Submissions string
 		Problems    string
-	}
-	Address struct {
-		Host string
-		Port uint16
 	}
 )
 

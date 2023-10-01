@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-	"igloo/igloo/global"
-	"igloo/igloo/http"
-	"igloo/igloo/judge/worker"
+	"igloo/global"
+	"igloo/judge/worker"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,6 +17,5 @@ func main() {
 		<-ctx.Done()
 		global.Worker.Destroy()
 	}()
-	go http.StartServer(ctx)
 	global.Worker.Work()
 }

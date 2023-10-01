@@ -14,13 +14,13 @@ RUN go mod download
 COPY . .
 RUN go build -o ./out/igloo -ldflags "-s -w" main.go
 
-FROM golang:bullseye AS judge-env
+FROM golang:bullseye AS env-tier-1
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt update && apt install -y gcc python3 python2 clang fpc pypy3 && rm -rf /var/lib/apt/lists/*
 
-FROM judge-env AS runner
+FROM env-tier-1 AS tier-1
 WORKDIR /igloo
 
 EXPOSE 172/tcp

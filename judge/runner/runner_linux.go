@@ -2,7 +2,7 @@ package runner
 
 import (
 	"github.com/criyle/go-sandbox/container"
-	runner "igloo/igloo/judge/runner/linux"
+	runner "igloo/judge/runner/linux"
 )
 
 func init() {

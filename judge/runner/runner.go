@@ -3,9 +3,9 @@ package runner
 import (
 	"context"
 	"github.com/criyle/go-sandbox/runner"
-	"igloo/igloo/judge/runner/shared"
-	"igloo/igloo/judge/runtimes"
-	"igloo/igloo/models"
+	"igloo/judge/runner/shared"
+	"igloo/judge/runtimes"
+	"igloo/models"
 )
 
 type (

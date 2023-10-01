@@ -4,8 +4,7 @@ on:
     branches: [ bleeding-edge, mainline ]
     paths:
       - '.github/workflows/*.yml'
-      - 'igloo/**.go'
-      - 'main.go'
+      - '**.go'
       - 'go.mod'
       - 'go.sum'
       - 'Dockerfile'

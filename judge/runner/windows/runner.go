@@ -1,3 +1,3 @@
 //go:build windows
 
-package runner
+package windows

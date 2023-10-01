@@ -1,7 +1,7 @@
 package runtimes
 
 import (
-	"igloo/igloo/utils"
+	"igloo/utils"
 )
 
 var goVerRegex = utils.NewRegex(`go version go(?P<Version>([0-9].[0-9]+(.[0-9]+)?))`)

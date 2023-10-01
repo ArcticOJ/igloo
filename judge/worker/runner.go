@@ -2,10 +2,10 @@ package worker
 
 import (
 	"context"
-	"igloo/igloo/judge/runner"
-	"igloo/igloo/judge/runtimes"
-	"igloo/igloo/logger"
-	"igloo/igloo/models"
+	"igloo/judge/runner"
+	"igloo/judge/runtimes"
+	"igloo/logger"
+	"igloo/models"
 	"sync/atomic"
 )
 

@@ -2,7 +2,7 @@ package runtimes
 
 import (
 	"fmt"
-	"igloo/igloo/utils"
+	"igloo/utils"
 	"strings"
 )
 

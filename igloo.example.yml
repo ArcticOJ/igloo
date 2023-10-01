@@ -1,0 +1,12 @@
+id: igloo-1
+parallelism: 3
+rabbitmq:
+  username: guest
+  password: guest
+  host: localhost
+  port: 5672
+  streamPort: 5552
+  vhost: arctic
+storage:
+  problems: /path/to/problems
+  submissions: /path/to/submissions

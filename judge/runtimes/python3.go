@@ -1,7 +1,7 @@
 package runtimes
 
 import (
-	"igloo/igloo/utils"
+	"igloo/utils"
 )
 
 var py3VerRegex = utils.NewRegex(`Python (?P<Version>([0-9].[0-9]+(.[0-9]+)?))`)
