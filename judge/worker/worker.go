@@ -80,6 +80,7 @@ func (w *JudgeWorker) WaitForSignal() {
 			for i := range w.pool {
 				w.pool[i].cancel()
 			}
+			return
 		}
 	}
 }
@@ -161,6 +162,7 @@ func (w *JudgeWorker) Consume(r *_runner) {
 		case <-r.ctx.Done():
 			return
 		case d := <-r.c:
+			logger.Logger.Debug().Str("id", d.CorrelationId).Msg("received submission")
 			w.Judge(r, d)
 		}
 	}

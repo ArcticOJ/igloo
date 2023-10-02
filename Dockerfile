@@ -23,8 +23,6 @@ RUN apt update && apt install -y gcc python3 python2 clang fpc pypy3 && rm -rf /
 FROM env-tier-1 AS tier-1
 WORKDIR /igloo
 
-EXPOSE 172/tcp
-
 COPY --from=builder /usr/src/app/out/igloo ./
 
 ENTRYPOINT ["/igloo/igloo"]

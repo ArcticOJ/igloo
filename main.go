@@ -16,6 +16,7 @@ func main() {
 	go func() {
 		<-ctx.Done()
 		global.Worker.Destroy()
+		os.Exit(0)
 	}()
 	global.Worker.Work()
 }

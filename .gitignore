@@ -3,3 +3,4 @@ tmp/
 ._**
 .secrets
 igloo.yml
+.air.remote.toml

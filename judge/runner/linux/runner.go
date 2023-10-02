@@ -12,6 +12,7 @@ import (
 	"github.com/criyle/go-sandbox/pkg/mount"
 	"github.com/criyle/go-sandbox/pkg/rlimit"
 	"github.com/criyle/go-sandbox/runner"
+	"igloo/config"
 	"igloo/judge/runner/shared"
 	"igloo/judge/runtimes"
 	"igloo/logger"
@@ -75,10 +76,12 @@ func init() {
 func New(cpu uint8) (r *LinuxRunner, e error) {
 	uid := os.Getuid()
 	if uid == 0 {
-		// fallback to 10000 on root
-		uid = 10000
+		// fallback to 1536 on root
+		uid = 1536
 	}
 	cb := container.Builder{
+		Root:          "/tmp",
+		TmpRoot:       "igloo-container-*",
 		Mounts:        mounts,
 		SymbolicLinks: symlinks,
 		MaskPaths:     Config.MaskPaths,
@@ -89,6 +92,9 @@ func New(cpu uint8) (r *LinuxRunner, e error) {
 		DomainName:    "arctic",
 		ContainerUID:  Config.UID,
 		ContainerGID:  Config.GID,
+	}
+	if config.Config.Debug {
+		cb.Stderr = os.Stdout
 	}
 	r = &LinuxRunner{cpu: cpu}
 	r.Environment, e = cb.Build()
@@ -235,7 +241,7 @@ func (r *LinuxRunner) Judge(args []string, config *shared.Config, ctx context.Co
 		if err == nil {
 			res.Time = time.Duration(cpu)
 		}
-		if res.Memory.MiB() == uint64(config.MemoryLimit>>20) {
+		if res.Memory.MiB() >= uint64(config.MemoryLimit>>20) {
 			res.Status = runner.StatusMemoryLimitExceeded
 		}
 		return &res, nil
