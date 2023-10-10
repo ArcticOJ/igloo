@@ -71,10 +71,6 @@ mounts:
   - type: tmpfs
     target: /tmp
     options: size=128m,nr_inodes=4k
-#  - type: bind
-#    source: passwd
-#    target: /etc/passwd
-#    readonly: true
 # java & ghc wants /proc/self/exe
 proc: true
 # create /dev standard io

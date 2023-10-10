@@ -3,16 +3,16 @@ package worker
 import (
 	"context"
 	"fmt"
+	"github.com/ArcticOJ/igloo/v0/config"
+	"github.com/ArcticOJ/igloo/v0/logger"
+	"github.com/ArcticOJ/igloo/v0/models"
+	"github.com/ArcticOJ/igloo/v0/runtimes"
+	"github.com/ArcticOJ/igloo/v0/sys"
+	_ "github.com/ArcticOJ/igloo/v0/sys"
 	amqp "github.com/rabbitmq/amqp091-go"
 	amqp2 "github.com/rabbitmq/rabbitmq-stream-go-client/pkg/amqp"
 	"github.com/rabbitmq/rabbitmq-stream-go-client/pkg/stream"
 	"github.com/vmihailenco/msgpack/v5"
-	"igloo/config"
-	"igloo/judge/runtimes"
-	"igloo/logger"
-	"igloo/models"
-	"igloo/sys"
-	_ "igloo/sys"
 	"math"
 	"net"
 	"runtime"
@@ -61,7 +61,7 @@ func New(ctx context.Context) *JudgeWorker {
 		}
 		runners[i].currentSubmission.Store(math.MaxUint32)
 	}
-	logger.Logger.Info().Msgf("initializing igloo with %d concurrent runners", config.Config.Parallelism)
+	logger.Logger.Info().Msgf("initializing igloo with %d concurrent runner(s)", config.Config.Parallelism)
 	return &JudgeWorker{
 		ctx:  ctx,
 		pool: runners,
@@ -114,7 +114,6 @@ func (w *JudgeWorker) Connect() {
 	for name, _rt := range runtimes.Runtimes {
 		rt := _rt
 		logger.Panic(w.mqChan.QueueBind(w.mq.Name, name, "submissions", false, amqp.Table{
-			"Name":      config.Config.ID,
 			"Version":   rt.Version,
 			"Compiler":  rt.Program,
 			"Arguments": rt.Arguments,
@@ -159,16 +158,19 @@ func (w *JudgeWorker) PublishResult(prod *stream.Producer, headers map[string]in
 func (w *JudgeWorker) Consume(r *_runner) {
 	for {
 		select {
-		case <-r.ctx.Done():
+		case <-w.ctx.Done():
 			return
 		case d := <-r.c:
-			logger.Logger.Debug().Str("id", d.CorrelationId).Msg("received submission")
-			w.Judge(r, d)
+			if d.CorrelationId != "" {
+				logger.Logger.Debug().Str("id", d.CorrelationId).Msg("received submission")
+				w.Judge(r, d)
+			}
 		}
 	}
 }
 
 func (w *JudgeWorker) Judge(r *_runner, d amqp.Delivery) {
+	// TODO: ensure that ram is adequate to handle submissions
 	if r.Busy() {
 		d.Reject(true)
 		return
@@ -187,11 +189,13 @@ func (w *JudgeWorker) Judge(r *_runner, d amqp.Delivery) {
 	r.currentSubmission.Store(sub.ID)
 	judge := r.Judge(&sub, r.ctx, func(caseId uint16, r models.CaseResult) bool {
 		return w.PublishResult(prod, map[string]interface{}{
+			"from":    config.Config.ID,
 			"case-id": int32(caseId),
 			"ttl":     int(sub.Constraints.TimeLimit + 15),
 		}, r) != nil
 	})
 	w.PublishResult(prod, map[string]interface{}{
+		"from": config.Config.ID,
 		"type": "final",
 	}, judge())
 	d.Ack(false)

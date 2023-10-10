@@ -2,10 +2,10 @@ package runner
 
 import (
 	_ "embed"
+	"github.com/ArcticOJ/igloo/v0/logger"
 	"github.com/criyle/go-sandbox/container"
 	"github.com/criyle/go-sandbox/pkg/mount"
 	"gopkg.in/yaml.v2"
-	"igloo/logger"
 	"os"
 	"path"
 )
@@ -55,7 +55,7 @@ const (
 
 func (c *ContainerConfig) Build() ([]mount.Mount, []container.SymbolicLink, error) {
 	mb := mount.NewBuilder()
-	var symlinks []container.SymbolicLink
+	var _symlinks []container.SymbolicLink
 	if c.Proc {
 		mb.WithProc()
 	}
@@ -83,7 +83,7 @@ func (c *ContainerConfig) Build() ([]mount.Mount, []container.SymbolicLink, erro
 		mb.WithProc()
 	}
 	for _, l := range c.Symlinks {
-		symlinks = append(symlinks, container.SymbolicLink{LinkPath: l.LinkPath, Target: l.Target})
+		_symlinks = append(_symlinks, container.SymbolicLink{LinkPath: l.LinkPath, Target: l.Target})
 	}
 	return mb.FilterNotExist().Mounts, nil, nil
 }

@@ -1,8 +1,8 @@
 package runner
 
 import (
+	runner "github.com/ArcticOJ/igloo/v0/runner/linux"
 	"github.com/criyle/go-sandbox/container"
-	runner "igloo/judge/runner/linux"
 )
 
 func init() {

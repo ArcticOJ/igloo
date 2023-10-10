@@ -2,15 +2,15 @@ package worker
 
 import (
 	"context"
-	"fmt"
+	"github.com/ArcticOJ/igloo/v0/checker"
+	"github.com/ArcticOJ/igloo/v0/config"
+	"github.com/ArcticOJ/igloo/v0/models"
+	"github.com/ArcticOJ/igloo/v0/runner"
+	"github.com/ArcticOJ/igloo/v0/runner/shared"
+	"github.com/ArcticOJ/igloo/v0/runtimes"
+	"github.com/ArcticOJ/igloo/v0/utils"
 	r "github.com/criyle/go-sandbox/runner"
-	"igloo/config"
-	"igloo/judge/checker"
-	"igloo/judge/runner"
-	"igloo/judge/runner/shared"
-	"igloo/judge/runtimes"
-	"igloo/models"
-	"igloo/utils"
+	"os"
 	"path"
 	"strconv"
 )
@@ -42,31 +42,39 @@ func (jc *JudgeRunner) Run(rt *runtimes.Runtime, sub *models.Submission, prog st
 		return models.InitError, e
 	}
 	// TODO: stop judging once context is done.
-	for i := uint16(0); i < sub.TestCount; i++ {
-		casePath := path.Join(config.Config.Storage.Problems, sub.ProblemID)
-		caseId := strconv.Itoa(int(i + 1))
-		inp, expectedOut := path.Join(casePath, caseId, fmt.Sprintf("%s.inp", sub.ProblemID)), path.Join(casePath, caseId, fmt.Sprintf("%s.out", sub.ProblemID))
-		res, _e := judge(inp)
+	for i := uint16(1); i <= sub.TestCount; i++ {
+		casePath := path.Join(config.Config.Storage.Problems, sub.ProblemID, strconv.FormatUint(uint64(i), 10))
+		res, e := judge(path.Join(casePath, "input.inp"))
+		if res == nil {
+			callback(i, models.CaseResult{Verdict: models.InternalError})
+			continue
+		}
 		result := models.CaseResult{Duration: float32(res.Time.Microseconds() / 1000), Memory: uint32(res.Memory.KiB()), Verdict: runner.Convert(res.Status)}
-		if _e != nil {
+		if e != nil {
 			result.Verdict = models.RuntimeError
 			callback(i, result)
 			if c.ShortCircuit {
-				return models.ShortCircuit, _e
+				return models.ShortCircuit, e
 			}
-			continue
-		}
-		if res == nil {
-			callback(i, models.CaseResult{Verdict: models.InternalError})
 			continue
 		}
 		if res.Status != r.StatusNormal {
 			callback(i, result)
 			if c.ShortCircuit {
-				return models.ShortCircuit, _e
+				return models.ShortCircuit, nil
 			}
 		} else {
-			ok, msg := checker.Check(out, expectedOut)
+			//expOut, _err := cache.Get(ctx, sub.ProblemID, i, "out")
+			expOut, e := os.Open(path.Join(casePath, "output.out"))
+			if e != nil {
+				result.Verdict = models.InternalError
+				callback(i, result)
+				continue
+			}
+			//_x, _ := io.ReadAll(expOut)
+			//fmt.Println(string(_x))
+			//fmt.Println()
+			ok, msg := checker.Check(out, expOut)
 			result.Message = msg
 			if ok {
 				result.Verdict = models.Accepted
@@ -75,7 +83,7 @@ func (jc *JudgeRunner) Run(rt *runtimes.Runtime, sub *models.Submission, prog st
 				result.Verdict = models.WrongAnswer
 				callback(i, result)
 				if c.ShortCircuit {
-					return models.ShortCircuit, _e
+					return models.ShortCircuit, nil
 				}
 			}
 		}

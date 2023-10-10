@@ -2,10 +2,10 @@ package runner
 
 import (
 	"context"
+	"github.com/ArcticOJ/igloo/v0/models"
+	"github.com/ArcticOJ/igloo/v0/runner/shared"
+	"github.com/ArcticOJ/igloo/v0/runtimes"
 	"github.com/criyle/go-sandbox/runner"
-	"igloo/judge/runner/shared"
-	"igloo/judge/runtimes"
-	"igloo/models"
 )
 
 type (

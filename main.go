@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"igloo/global"
-	"igloo/judge/worker"
+	"github.com/ArcticOJ/igloo/v0/logger"
+	"github.com/ArcticOJ/igloo/v0/worker"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,11 +12,12 @@ import (
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	global.Worker = worker.New(ctx)
+	w := worker.New(ctx)
 	go func() {
 		<-ctx.Done()
-		global.Worker.Destroy()
+		logger.Logger.Info().Msg("received signal, exiting...")
+		w.Destroy()
 		os.Exit(0)
 	}()
-	global.Worker.Work()
+	w.Work()
 }

@@ -8,20 +8,16 @@ import (
 	"os"
 )
 
-func Check(output, expected string) (bool, string) {
+func Check(output string, expected io.ReadCloser) (bool, string) {
 	outFile, e := os.Open(output)
 	if e != nil {
 		return false, "failed to open output file"
 	}
 	defer outFile.Close()
-	expFile, e := os.Open(expected)
-	if e != nil {
-		return false, "failed to open expected output file"
-	}
-	defer expFile.Close()
+	defer expected.Close()
 	cntOfMatches, cntOfOut := 0, 0
 	r1 := bufio.NewReader(outFile)
-	r2 := bufio.NewReader(expFile)
+	r2 := bufio.NewReader(expected)
 	for {
 		outEof, expEof := false, false
 		_l1, p1, e := r1.ReadLine()
@@ -65,6 +61,7 @@ func Check(output, expected string) (bool, string) {
 		cntOfOut++
 		l1 := bytes.TrimRight(_l1, " \r\n")
 		l2 := bytes.TrimRight(_l2, " \r\n")
+		//fmt.Println(string(l1), string(l2))
 		if bytes.Equal(l1, l2) {
 			cntOfMatches++
 		}

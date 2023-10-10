@@ -1,9 +1,9 @@
 package config
 
 import (
+	"github.com/ArcticOJ/igloo/v0/logger"
 	"github.com/rs/zerolog"
 	"gopkg.in/yaml.v2"
-	"igloo/logger"
 	"os"
 )
 
@@ -13,20 +13,25 @@ type (
 		Debug       bool `yaml:"-"`
 		Key         string
 		Parallelism int16
-		Storage     *StorageConfig
-		RabbitMQ    *RabbitMQConfig
+		Storage     StorageConfig
+		RabbitMQ    RabbitMQConfig
+		// TODO: make caching optional
+		Dragonfly Address
 	}
 	RabbitMQConfig struct {
 		Username   string
 		Password   string
-		Host       string
-		Port       uint16
+		Address    `yaml:",inline"`
 		StreamPort uint16 `yaml:"streamPort"`
 		VHost      string
 	}
 	StorageConfig struct {
 		Submissions string
 		Problems    string
+	}
+	Address struct {
+		Host string
+		Port uint16
 	}
 )
 

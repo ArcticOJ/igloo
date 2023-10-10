@@ -1,8 +1,8 @@
 package sys
 
 import (
+	"github.com/ArcticOJ/igloo/v0/logger"
 	"github.com/elastic/go-sysinfo"
-	"igloo/logger"
 	"time"
 )
 
