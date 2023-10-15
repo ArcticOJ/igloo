@@ -12,9 +12,8 @@ require (
 	github.com/rabbitmq/rabbitmq-stream-go-client v1.2.1
 	github.com/redis/go-redis/v9 v9.2.1
 	github.com/rs/zerolog v1.31.0
-	github.com/spf13/cobra v1.7.0
 	github.com/vmihailenco/msgpack/v5 v5.4.0
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
+	golang.org/x/sync v0.4.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -25,7 +24,6 @@ require (
 	github.com/elastic/go-windows v1.0.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
@@ -36,7 +34,6 @@ require (
 	github.com/onsi/gomega v1.27.10 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
