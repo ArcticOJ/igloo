@@ -61,7 +61,6 @@ func Check(output string, expected io.ReadCloser) (bool, string) {
 		cntOfOut++
 		l1 := bytes.TrimRight(_l1, " \r\n")
 		l2 := bytes.TrimRight(_l2, " \r\n")
-		//fmt.Println(string(l1), string(l2))
 		if bytes.Equal(l1, l2) {
 			cntOfMatches++
 		}

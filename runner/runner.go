@@ -16,7 +16,7 @@ type (
 			// initialization error
 			error,
 		)
-		Compile(rt *runtimes.Runtime, sourceCode string, ctx context.Context) (string, string, error)
+		Compile(rt runtimes.Runtime, sourceCode string, ctx context.Context) (string, string, error)
 		Cleanup() error
 		Destroy() error
 	}

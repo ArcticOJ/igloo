@@ -4,45 +4,38 @@ import (
 	"strings"
 )
 
-var defaultRt = map[string]*Runtime{
-	"gnuc++11": Cpp11(),
-	"gnuc++14": Cpp14(),
-	"gnuc++17": Cpp17(),
-	"gnuc++20": Cpp20(),
-	"go":       Go(),
-	"python3":  Py3(),
-}
-
-var Runtimes = buildRt()
-
-type Runtime struct {
-	getVersion  func() (string, error)
-	Program     string `json:"program"`
-	Arguments   string `json:"arguments"`
-	ExecCommand string `json:"execCommand,omitempty"`
-	Version     string `json:"version"`
-}
-
-func buildRt() (rt map[string]*Runtime) {
-	rt = make(map[string]*Runtime)
-	for key, r := range defaultRt {
-		v, e := r.getVersion()
-		if e != nil {
-			continue
-		}
-		nr := r
-		nr.Version = v
-		rt[key] = nr
+var (
+	DefaultSupportedRuntimes = map[string]supportedRuntime{
+		"gnuc++11": gnucpp11(),
+		"gnuc++14": gnucpp14(),
+		"gnuc++17": gnucpp17(),
+		"gnuc++20": gnucpp20(),
+		"golang":   golang(),
+		"python3":  py3(),
 	}
-	return
-}
+)
 
-func (rt *Runtime) BuildCompileCommand(inp, output string) (string, []string) {
+type (
+	supportedRuntime struct {
+		GetVersion  func() (string, error)
+		Program     string
+		Arguments   string
+		ExecCommand string
+	}
+	Runtime struct {
+		Program     string `yaml:"program"`
+		Arguments   string `yaml:"arguments"`
+		ExecCommand string `yaml:"execCommand,omitempty"`
+		Version     string `yaml:"version"`
+	}
+)
+
+func (rt Runtime) BuildCompileCommand(inp, output string) (string, []string) {
 	r := strings.NewReplacer("{{input}}", inp, "{{output}}", output)
 	return rt.Program, strings.Split(r.Replace(rt.Arguments), " ")
 }
 
-func (rt *Runtime) BuildExecCommand(prog string) (string, []string) {
+func (rt Runtime) BuildExecCommand(prog string) (string, []string) {
 	if rt.ExecCommand == "" {
 		return prog, []string{}
 	}

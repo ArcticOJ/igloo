@@ -14,10 +14,10 @@ func getGoVersion() (string, error) {
 	return goVerRegex.Submatch(output).Find("Version"), nil
 }
 
-func Go() *Runtime {
-	return &Runtime{
+func golang() supportedRuntime {
+	return supportedRuntime{
 		Program:    "go",
 		Arguments:  "build -x -o {{output}} {{input}}",
-		getVersion: getGoVersion,
+		GetVersion: getGoVersion,
 	}
 }

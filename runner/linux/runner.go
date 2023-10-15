@@ -104,7 +104,7 @@ func New(cpu uint8) (r *LinuxRunner, e error) {
 	return r, nil
 }
 
-func (r *LinuxRunner) Compile(rt *runtimes.Runtime, sourceCode string, ctx context.Context) (outPath, compOut string, e error) {
+func (r *LinuxRunner) Compile(rt runtimes.Runtime, sourceCode string, ctx context.Context) (outPath, compOut string, e error) {
 	ext := path.Ext(sourceCode)
 	rand := utils.NextRand()
 	outPath = fmt.Sprintf("/tmp/igloo_%s", rand)

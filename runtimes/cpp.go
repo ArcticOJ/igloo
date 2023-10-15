@@ -6,19 +6,19 @@ import (
 	"strings"
 )
 
-func Cpp20() *Runtime {
+func gnucpp20() supportedRuntime {
 	return cpp("c++20")
 }
 
-func Cpp17() *Runtime {
+func gnucpp17() supportedRuntime {
 	return cpp("c++17")
 }
 
-func Cpp14() *Runtime {
+func gnucpp14() supportedRuntime {
 	return cpp("c++14")
 }
 
-func Cpp11() *Runtime {
+func gnucpp11() supportedRuntime {
 	return cpp("c++11")
 }
 
@@ -30,10 +30,10 @@ func getGccVersion() (string, error) {
 	return strings.TrimSpace(output), nil
 }
 
-func cpp(std string) *Runtime {
-	return &Runtime{
+func cpp(std string) supportedRuntime {
+	return supportedRuntime{
 		Program:    "g++",
 		Arguments:  fmt.Sprintf("-std=%s -o {{output}} -Wall -DONLINE_JUDGE -O2 -lm -march=native -s {{input}}", std),
-		getVersion: getGccVersion,
+		GetVersion: getGccVersion,
 	}
 }

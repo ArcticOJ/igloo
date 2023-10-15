@@ -14,11 +14,11 @@ func getPy3Version() (string, error) {
 	return py3VerRegex.Submatch(output).Find("Version"), nil
 }
 
-func Py3() *Runtime {
-	return &Runtime{
+func py3() supportedRuntime {
+	return supportedRuntime{
 		Program:     "python3",
 		Arguments:   "-m libarctic.compiler -q -o {{output}}.pyc {{input}}",
 		ExecCommand: "python3 {{program}}.pyc",
-		getVersion:  getPy3Version,
+		GetVersion:  getPy3Version,
 	}
 }

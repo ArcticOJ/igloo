@@ -1,0 +1,25 @@
+gnuc++11:
+    program: /usr/bin/g++
+    arguments: -std=c++11 -o {{output}} -Wall -DONLINE_JUDGE -O2 -lm -march=native -s {{input}}
+    version: 13.2.1
+gnuc++14:
+    program: /usr/bin/g++
+    arguments: -std=c++14 -o {{output}} -Wall -DONLINE_JUDGE -O2 -lm -march=native -s {{input}}
+    version: 13.2.1
+gnuc++17:
+    program: /usr/bin/g++
+    arguments: -std=c++17 -o {{output}} -Wall -DONLINE_JUDGE -O2 -lm -march=native -s {{input}}
+    version: 13.2.1
+gnuc++20:
+    program: /usr/bin/g++
+    arguments: -std=c++20 -o {{output}} -Wall -DONLINE_JUDGE -O2 -lm -march=native -s {{input}}
+    version: 13.2.1
+golang:
+    program: /usr/lib/go/bin/go
+    arguments: build -x -o {{output}} {{input}}
+    version: 1.21.1
+python3:
+    program: /usr/bin/python3
+    arguments: -m libarctic.compiler -q -o {{output}}.pyc {{input}}
+    execCommand: python3 {{program}}.pyc
+    version: 3.11.5

@@ -6,7 +6,6 @@ import (
 	"github.com/ArcticOJ/igloo/v0/config"
 	"github.com/ArcticOJ/igloo/v0/logger"
 	"github.com/ArcticOJ/igloo/v0/models"
-	"github.com/ArcticOJ/igloo/v0/runtimes"
 	"github.com/ArcticOJ/igloo/v0/sys"
 	_ "github.com/ArcticOJ/igloo/v0/sys"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -111,8 +110,7 @@ func (w *JudgeWorker) Connect() {
 		"Version":     "0.0.1-prealpha",
 	})
 	logger.Panic(e, "failed to open queue for submissions")
-	for name, _rt := range runtimes.Runtimes {
-		rt := _rt
+	for name, rt := range Runtimes {
 		logger.Panic(w.mqChan.QueueBind(w.mq.Name, name, "submissions", false, amqp.Table{
 			"Version":   rt.Version,
 			"Compiler":  rt.Program,
@@ -125,7 +123,7 @@ func (w *JudgeWorker) Connect() {
 		w.pool[i].c, e = w.mqChan.Consume(w.mq.Name, fmt.Sprintf("%s#%d", w.mq.Name, i), false, false, false, false, nil)
 		logger.Panic(e, "could not create a consumer for runner #%d", i)
 	}
-	w.rc = w.mqChan.NotifyReturn(make(chan amqp.Return, 1))
+	//w.rc = w.mqChan.NotifyReturn(make(chan amqp.Return, 1))
 	w.ec = w.mqConn.NotifyClose(make(chan *amqp.Error, 1))
 }
 
@@ -144,7 +142,7 @@ func (w *JudgeWorker) CreateStream() {
 	}
 }
 
-func (w *JudgeWorker) PublishResult(prod *stream.Producer, headers map[string]interface{}, body interface{}) error {
+func (w *JudgeWorker) publish(prod *stream.Producer, headers map[string]interface{}, body interface{}) error {
 	if b, e := msgpack.Marshal(map[string]interface{}{
 		"Headers": headers,
 		"Body":    body,
@@ -171,10 +169,6 @@ func (w *JudgeWorker) Consume(r *_runner) {
 
 func (w *JudgeWorker) Judge(r *_runner, d amqp.Delivery) {
 	// TODO: ensure that ram is adequate to handle submissions
-	if r.Busy() {
-		d.Reject(true)
-		return
-	}
 	var sub models.Submission
 	if msgpack.Unmarshal(d.Body, &sub) != nil {
 		d.Reject(false)
@@ -182,19 +176,24 @@ func (w *JudgeWorker) Judge(r *_runner, d amqp.Delivery) {
 	}
 	prod, e := w.env.NewProducer(d.ReplyTo, stream.NewProducerOptions().SetProducerName(fmt.Sprintf("judge-%s#%d", config.Config.ID, r.boundCpu)))
 	if e != nil {
-		d.Reject(true)
+		d.Reject(false)
 		return
 	}
 	defer prod.Close()
 	r.currentSubmission.Store(sub.ID)
-	judge := r.Judge(&sub, r.ctx, func(caseId uint16, r models.CaseResult) bool {
-		return w.PublishResult(prod, map[string]interface{}{
+	judge := r.Judge(&sub, r.ctx, func(cid uint16) {
+		w.publish(prod, map[string]interface{}{
+			"from": config.Config.ID,
+			"type": "announcement",
+		}, cid)
+	}, func(caseId uint16, r models.CaseResult) bool {
+		return w.publish(prod, map[string]interface{}{
 			"from":    config.Config.ID,
 			"case-id": int32(caseId),
 			"ttl":     int(sub.Constraints.TimeLimit + 15),
 		}, r) != nil
 	})
-	w.PublishResult(prod, map[string]interface{}{
+	w.publish(prod, map[string]interface{}{
 		"from": config.Config.ID,
 		"type": "final",
 	}, judge())

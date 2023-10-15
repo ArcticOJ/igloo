@@ -5,7 +5,6 @@ import (
 	"github.com/ArcticOJ/igloo/v0/logger"
 	"github.com/ArcticOJ/igloo/v0/models"
 	"github.com/ArcticOJ/igloo/v0/runner"
-	"github.com/ArcticOJ/igloo/v0/runtimes"
 	"sync/atomic"
 )
 
@@ -27,20 +26,26 @@ func (jc *JudgeRunner) Busy() bool {
 	return jc.isBusy.Load()
 }
 
-func (jc *JudgeRunner) Judge(sub *models.Submission, ctx context.Context, callback func(uint16, models.CaseResult) bool) func() models.FinalResult {
+func (jc *JudgeRunner) Judge(sub *models.Submission, ctx context.Context, announce func(uint16), callback func(uint16, models.CaseResult) bool) func() models.FinalResult {
 	jc.isBusy.Store(true)
 	return func() models.FinalResult {
 		defer func() {
 			_ = jc.runner.Cleanup()
 			jc.isBusy.Store(false)
 		}()
-		rt := runtimes.Runtimes[sub.Language]
+		rt := Runtimes[sub.Language]
+		announce(0)
 		outPath, compOut, e := jc.Compile(rt, sub, ctx)
 		if e != nil {
 			return models.FinalResult{Verdict: models.CompileError, CompilerOutput: compOut}
 		}
-		fv, e := jc.Run(rt, sub, outPath, callback, ctx)
-		return models.FinalResult{Verdict: fv, CompilerOutput: compOut}
+		fv, p, e := jc.Run(rt, sub, announce, outPath, callback, ctx)
+		return models.FinalResult{
+			Verdict:        fv,
+			CompilerOutput: compOut,
+			Points:         p,
+			MaxPoints:      float32(sub.TestCount) * sub.PointsPerTest,
+		}
 	}
 }
 
