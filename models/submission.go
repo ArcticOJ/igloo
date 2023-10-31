@@ -7,7 +7,7 @@ type (
 		Language      string
 		ProblemID     string
 		TestCount     uint16
-		PointsPerTest float32
+		PointsPerTest float64
 		Constraints   Constraints
 	}
 

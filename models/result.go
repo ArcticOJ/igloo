@@ -10,8 +10,8 @@ type (
 		Verdict  CaseVerdict
 	}
 	FinalResult struct {
-		Points         float32
-		MaxPoints      float32
+		Points         float64
+		MaxPoints      float64
 		CompilerOutput string
 		Verdict        FinalVerdict
 	}

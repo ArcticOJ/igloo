@@ -9,14 +9,14 @@ import (
 )
 
 type JudgeRunner struct {
-	boundCpu uint8
+	boundCpu uint16
 	isBusy   atomic.Bool
 	runner   runner.Runner
 }
 
-func NewJudge(boundCpu int) (r *JudgeRunner) {
-	r = &JudgeRunner{boundCpu: uint8(boundCpu)}
-	_r, e := runner.New(uint8(boundCpu))
+func NewJudge(boundCpu uint16) (r *JudgeRunner) {
+	r = &JudgeRunner{boundCpu: boundCpu}
+	_r, e := runner.New(boundCpu)
 	logger.Panic(e, "could not spawn runner for cpu %d", boundCpu)
 	r.runner = _r
 	return
@@ -44,7 +44,7 @@ func (jc *JudgeRunner) Judge(sub *models.Submission, ctx context.Context, announ
 			Verdict:        fv,
 			CompilerOutput: compOut,
 			Points:         p,
-			MaxPoints:      float32(sub.TestCount) * sub.PointsPerTest,
+			MaxPoints:      float64(sub.TestCount) * sub.PointsPerTest,
 		}
 	}
 }

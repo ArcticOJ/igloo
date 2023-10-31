@@ -1,5 +1,5 @@
 id: igloo-1
-parallelism: 3
+cpus: [11,12,13,14,15]
 rabbitmq:
   username: guest
   password: guest

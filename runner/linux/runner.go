@@ -32,7 +32,7 @@ var (
 )
 
 type LinuxRunner struct {
-	cpu uint8
+	cpu uint16
 	container.Environment
 }
 
@@ -73,7 +73,7 @@ func init() {
 	}
 }
 
-func New(cpu uint8) (r *LinuxRunner, e error) {
+func New(cpu uint16) (r *LinuxRunner, e error) {
 	uid := os.Getuid()
 	if uid == 0 {
 		// fallback to 1536 on root

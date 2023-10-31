@@ -9,6 +9,6 @@ func init() {
 	_ = container.Init()
 }
 
-func New(cpu uint8) (Runner, error) {
+func New(cpu uint16) (Runner, error) {
 	return runner.New(cpu)
 }

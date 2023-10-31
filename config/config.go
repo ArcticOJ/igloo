@@ -10,9 +10,10 @@ import (
 type (
 	IglooConfig struct {
 		ID          string
-		Debug       bool `yaml:"-"`
+		CPUs        []uint16
+		Parallelism uint16 `yaml:"-"`
+		Debug       bool   `yaml:"-"`
 		Key         string
-		Parallelism int16
 		Storage     StorageConfig
 		RabbitMQ    RabbitMQConfig
 		// TODO: make caching optional

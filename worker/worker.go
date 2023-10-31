@@ -15,6 +15,7 @@ import (
 	"math"
 	"net"
 	"runtime"
+	"slices"
 	"sync/atomic"
 	"time"
 )
@@ -41,26 +42,27 @@ type (
 )
 
 func New(ctx context.Context) *JudgeWorker {
-	maxCpus := runtime.NumCPU()
-	if config.Config.Parallelism == -1 || int(config.Config.Parallelism) > maxCpus {
-		config.Config.Parallelism = int16(maxCpus / 2)
-		logger.Logger.Info().Msgf("automatically allocating %d cores for workers", config.Config.Parallelism)
-	} else if int16(maxCpus/2) < config.Config.Parallelism {
+	maxCpus := uint16(runtime.NumCPU())
+	config.Config.CPUs = slices.DeleteFunc(config.Config.CPUs, func(cpu uint16) bool {
+		return cpu >= maxCpus
+	})
+	slices.Sort(config.Config.CPUs)
+	config.Config.Parallelism = uint16(len(config.Config.CPUs))
+	if maxCpus/2 < config.Config.Parallelism {
 		logger.Logger.Warn().Msg("running with more than 50% logical cores is not recommended.")
 	}
-	offset := maxCpus - int(config.Config.Parallelism)
 	runners := make([]*_runner, config.Config.Parallelism)
 	for i := range runners {
 		_ctx, cancel := context.WithCancel(ctx)
 		runners[i] = &_runner{
-			JudgeRunner: NewJudge(offset + i),
+			JudgeRunner: NewJudge(config.Config.CPUs[i]),
 			c:           make(<-chan amqp.Delivery, 1),
 			ctx:         _ctx,
 			cancel:      cancel,
 		}
 		runners[i].currentSubmission.Store(math.MaxUint32)
 	}
-	logger.Logger.Info().Msgf("initializing igloo with %d concurrent runner(s)", config.Config.Parallelism)
+	logger.Logger.Info().Uints16("cpus", config.Config.CPUs).Uint16("parallelism", config.Config.Parallelism).Msgf("initializing igloo")
 	return &JudgeWorker{
 		ctx:  ctx,
 		pool: runners,
@@ -106,7 +108,7 @@ func (w *JudgeWorker) Connect() {
 		"BootedSince": sys.BootTimestamp,
 		"OS":          sys.OS,
 		"Memory":      int64(sys.Memory),
-		"Parallelism": config.Config.Parallelism,
+		"Parallelism": int(config.Config.Parallelism),
 		"Version":     "0.0.1-prealpha",
 	})
 	logger.Panic(e, "failed to open queue for submissions")
@@ -120,7 +122,7 @@ func (w *JudgeWorker) Connect() {
 	}
 	logger.Panic(w.mqChan.Qos(int(config.Config.Parallelism), 0, true), "error whilst setting QoS")
 	for i := range w.pool {
-		w.pool[i].c, e = w.mqChan.Consume(w.mq.Name, fmt.Sprintf("%s#%d", w.mq.Name, i), false, false, false, false, nil)
+		w.pool[i].c, e = w.mqChan.Consume(w.mq.Name, fmt.Sprintf("%s#%d", w.mq.Name, w.pool[i].boundCpu), false, false, false, false, nil)
 		logger.Panic(e, "could not create a consumer for runner #%d", i)
 	}
 	//w.rc = w.mqChan.NotifyReturn(make(chan amqp.Return, 1))

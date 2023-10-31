@@ -20,13 +20,13 @@ func (jc *JudgeRunner) Compile(rt runtimes.Runtime, sub *models.Submission, ctx 
 	return jc.runner.Compile(rt, srcCode, ctx)
 }
 
-func (jc *JudgeRunner) Run(rt runtimes.Runtime, sub *models.Submission, announce func(uint16), prog string, callback func(uint16, models.CaseResult) bool, ctx context.Context) (models.FinalVerdict, float32, error) {
+func (jc *JudgeRunner) Run(rt runtimes.Runtime, sub *models.Submission, announce func(uint16), prog string, callback func(uint16, models.CaseResult) bool, ctx context.Context) (models.FinalVerdict, float64, error) {
 	cmd, args := rt.BuildExecCommand(prog)
 	c := sub.Constraints
 	// TODO: implement per language time limit
 	// TODO: store output file inside container to run checker there
 	out, e := utils.CreateRandomFile("output-")
-	var p float32 = 0
+	var p float64 = 0
 	if e != nil {
 		return models.InitError, p, e
 	}
