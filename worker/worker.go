@@ -5,44 +5,40 @@ import (
 	"fmt"
 	"github.com/ArcticOJ/igloo/v0/config"
 	"github.com/ArcticOJ/igloo/v0/logger"
-	"github.com/ArcticOJ/igloo/v0/models"
+	"github.com/ArcticOJ/igloo/v0/runner"
 	"github.com/ArcticOJ/igloo/v0/sys"
 	_ "github.com/ArcticOJ/igloo/v0/sys"
-	amqp "github.com/rabbitmq/amqp091-go"
-	amqp2 "github.com/rabbitmq/rabbitmq-stream-go-client/pkg/amqp"
-	"github.com/rabbitmq/rabbitmq-stream-go-client/pkg/stream"
-	"github.com/vmihailenco/msgpack/v5"
+	polar "github.com/ArcticOJ/polar/v0/client"
+	"github.com/ArcticOJ/polar/v0/types"
 	"math"
-	"net"
 	"runtime"
 	"slices"
+	"strings"
 	"sync/atomic"
-	"time"
 )
 
 type (
 	JudgeWorker struct {
-		pool   []*_runner
-		rc     <-chan amqp.Return
-		ec     <-chan *amqp.Error
-		mqConn *amqp.Connection
-		mqChan *amqp.Channel
-		mq     amqp.Queue
-		env    *stream.Environment
-		ctx    context.Context
+		pool []*_runner
+		// TODO: implement auto reconnecting
+		p   *polar.Polar
+		ctx context.Context
 	}
 
 	_runner struct {
 		*JudgeRunner
 		currentSubmission atomic.Uint32
-		c                 <-chan amqp.Delivery
 		ctx               context.Context
 		cancel            func()
 	}
 )
 
-func New(ctx context.Context) *JudgeWorker {
+func New(ctx context.Context) (w *JudgeWorker) {
+	w = &JudgeWorker{
+		ctx: ctx,
+	}
 	maxCpus := uint16(runtime.NumCPU())
+	// remove invalid cpus
 	config.Config.CPUs = slices.DeleteFunc(config.Config.CPUs, func(cpu uint16) bool {
 		return cpu >= maxCpus
 	})
@@ -51,32 +47,26 @@ func New(ctx context.Context) *JudgeWorker {
 	if maxCpus/2 < config.Config.Parallelism {
 		logger.Logger.Warn().Msg("running with more than 50% logical cores is not recommended.")
 	}
-	runners := make([]*_runner, config.Config.Parallelism)
-	for i := range runners {
+
+	w.Connect()
+
+	w.pool = make([]*_runner, config.Config.Parallelism)
+	for i := range w.pool {
 		_ctx, cancel := context.WithCancel(ctx)
-		runners[i] = &_runner{
+		w.pool[i] = &_runner{
 			JudgeRunner: NewJudge(config.Config.CPUs[i]),
-			c:           make(<-chan amqp.Delivery, 1),
 			ctx:         _ctx,
 			cancel:      cancel,
 		}
-		runners[i].currentSubmission.Store(math.MaxUint32)
+		w.pool[i].currentSubmission.Store(math.MaxUint32)
 	}
 	logger.Logger.Info().Uints16("cpus", config.Config.CPUs).Uint16("parallelism", config.Config.Parallelism).Msgf("initializing igloo")
-	return &JudgeWorker{
-		ctx:  ctx,
-		pool: runners,
-	}
+	return
 }
 
 func (w *JudgeWorker) WaitForSignal() {
 	for {
 		select {
-		case e := <-w.ec:
-			logger.Logger.Debug().Err(e).Msg("reconnect")
-			w.Connect()
-		case d := <-w.rc:
-			fmt.Println(d)
 		case <-w.ctx.Done():
 			for i := range w.pool {
 				w.pool[i].cancel()
@@ -88,138 +78,88 @@ func (w *JudgeWorker) WaitForSignal() {
 
 func (w *JudgeWorker) Connect() {
 	var e error
-	if w.mqConn != nil {
-		w.mqConn.Close()
-		w.mqChan.Close()
+	j := types.Judge{
+		Name:        config.Config.ID,
+		BootedSince: sys.BootTimestamp.Unix(),
+		OS:          sys.OS,
+		Memory:      sys.Memory,
+		Parallelism: config.Config.Parallelism,
+		Version:     "0.0.1-prealpha",
 	}
-	conf := config.Config.RabbitMQ
-	w.mqConn, e = amqp.DialConfig(fmt.Sprintf("amqp://%s:%s@%s", conf.Username, conf.Password, net.JoinHostPort(conf.Host, fmt.Sprint(conf.Port))), amqp.Config{
-		Heartbeat: time.Second,
-		Vhost:     conf.VHost,
-	})
-	logger.Panic(e, "failed to establish a connection to rabbitmq")
-	w.mqChan, e = w.mqConn.Channel()
-	logger.Panic(e, "failed to open a channel for queue")
-	logger.Panic(w.mqChan.ExchangeDeclare("submissions", "direct", true, false, false, false, amqp.Table{
-		"x-consumer-timeout": 3600000,
-	}), "failed to declare exchange for submissions")
-	w.mq, e = w.mqChan.QueueDeclare(fmt.Sprintf("judge-worker-%s-%d", config.Config.ID, time.Now().UTC().UnixMilli()), true, false, true, false, amqp.Table{
-		"Name":        config.Config.ID,
-		"BootedSince": sys.BootTimestamp,
-		"OS":          sys.OS,
-		"Memory":      int64(sys.Memory),
-		"Parallelism": int(config.Config.Parallelism),
-		"Version":     "0.0.1-prealpha",
-	})
-	logger.Panic(e, "failed to open queue for submissions")
 	for name, rt := range Runtimes {
-		logger.Panic(w.mqChan.QueueBind(w.mq.Name, name, "submissions", false, amqp.Table{
-			"Version":   rt.Version,
-			"Compiler":  rt.Program,
-			"Arguments": rt.Arguments,
-		}), "could not register runtime '%s' to queue", name)
-		logger.Logger.Debug().Msgf("binding '%s' to queue", name)
+		j.Runtimes = append(j.Runtimes, types.Runtime{
+			ID:        name,
+			Compiler:  rt.Program,
+			Arguments: rt.Arguments,
+			Version:   rt.Version,
+		})
 	}
-	logger.Panic(w.mqChan.Qos(int(config.Config.Parallelism), 0, true), "error whilst setting QoS")
-	for i := range w.pool {
-		w.pool[i].c, e = w.mqChan.Consume(w.mq.Name, fmt.Sprintf("%s#%d", w.mq.Name, w.pool[i].boundCpu), false, false, false, false, nil)
-		logger.Panic(e, "could not create a consumer for runner #%d", i)
-	}
-	//w.rc = w.mqChan.NotifyReturn(make(chan amqp.Return, 1))
-	w.ec = w.mqConn.NotifyClose(make(chan *amqp.Error, 1))
-}
-
-func (w *JudgeWorker) CreateStream() {
-	var e error
-	conf := config.Config.RabbitMQ
-	w.env, e = stream.NewEnvironment(
-		stream.NewEnvironmentOptions().
-			SetHost(conf.Host).
-			SetPort(int(conf.StreamPort)).
-			SetUser(conf.Username).
-			SetPassword(conf.Password).
-			SetVHost(conf.VHost))
-	if e != nil {
-		logger.Panic(e, "failed to start a stream connection")
-	}
-}
-
-func (w *JudgeWorker) publish(prod *stream.Producer, headers map[string]interface{}, body interface{}) error {
-	if b, e := msgpack.Marshal(map[string]interface{}{
-		"Headers": headers,
-		"Body":    body,
-	}); e == nil {
-		return prod.Send(amqp2.NewMessage(b))
-	} else {
-		return e
-	}
+	slices.SortStableFunc(j.Runtimes, func(a, b types.Runtime) int {
+		if a.ID == b.ID {
+			return 0
+		}
+		if a.ID > b.ID {
+			return 1
+		}
+		return -1
+	})
+	w.p, e = polar.New(w.ctx, config.Config.Polar.Host, config.Config.Polar.Port, j)
+	logger.Panic(e, "error creating new polar instance")
+	logger.Logger.Info().Msg("successfully connected to polar")
 }
 
 func (w *JudgeWorker) Consume(r *_runner) {
+	c, e := w.p.NewConsumer()
+	logger.Panic(e, "error creating consumer for runner #%d", r.boundCpu)
+	go func() {
+		logger.Panic(c.Consume(), "error creating consumer for runner #%d", r.boundCpu)
+	}()
 	for {
 		select {
 		case <-w.ctx.Done():
 			return
-		case d := <-r.c:
-			if d.CorrelationId != "" {
-				logger.Logger.Debug().Str("id", d.CorrelationId).Msg("received submission")
-				w.Judge(r, d)
-			}
+		case s := <-c.MessageChan:
+			logger.Logger.Debug().Interface("submission", s).Msg("received submission")
+			w.Judge(r, s)
 		}
 	}
 }
 
-func (w *JudgeWorker) Judge(r *_runner, d amqp.Delivery) {
-	// TODO: ensure that ram is adequate to handle submissions
-	var sub models.Submission
-	if msgpack.Unmarshal(d.Body, &sub) != nil {
-		d.Reject(false)
-		return
-	}
-	prod, e := w.env.NewProducer(d.ReplyTo, stream.NewProducerOptions().SetProducerName(fmt.Sprintf("judge-%s#%d", config.Config.ID, r.boundCpu)))
-	if e != nil {
-		d.Reject(false)
-		return
-	}
+func (w *JudgeWorker) Judge(r *_runner, sub types.Submission) {
+	// TODO: ensure that RAM is sufficient to handle submissions
+	prod, e := w.p.NewProducer(sub.ID)
 	defer prod.Close()
+	if e != nil {
+		//w.consumer.Reject(sub.ID)
+		return
+	}
 	r.currentSubmission.Store(sub.ID)
-	judge := r.Judge(&sub, r.ctx, func(cid uint16) {
-		w.publish(prod, map[string]interface{}{
-			"from": config.Config.ID,
-			"type": "announcement",
-		}, cid)
-	}, func(caseId uint16, r models.CaseResult) bool {
-		return w.publish(prod, map[string]interface{}{
-			"from":    config.Config.ID,
-			"case-id": int32(caseId),
-			"ttl":     int(sub.Constraints.TimeLimit + 15),
-		}, r) != nil
+	// TODO: immediately halt runner when getting error
+	judge := r.Judge(sub, r.ctx, func(caseId uint16) bool {
+		return prod.Report(types.ResultAnnouncement, caseId) != nil
+	}, func(r types.CaseResult) bool {
+		return prod.Report(types.ResultCase, r) == nil
 	})
-	w.publish(prod, map[string]interface{}{
-		"from": config.Config.ID,
-		"type": "final",
-	}, judge())
-	d.Ack(false)
+	finalResult := judge()
+	// replace actual new line characters with \\n to avoid shattered payloads when serializing response with msgpack
+	finalResult.CompilerOutput = strings.ReplaceAll(finalResult.CompilerOutput, "\n", "\\n")
+	prod.Report(types.ResultFinal, finalResult)
 }
 
 func (w *JudgeWorker) Work() {
-	w.Connect()
-	w.CreateStream()
 	for i := range w.pool {
-		// TODO: improve this a bit
 		go w.Consume(w.pool[i])
 	}
 	w.WaitForSignal()
 }
 
 func (w *JudgeWorker) Destroy() {
-	if w.mqConn != nil {
-		w.mqConn.Close()
-	}
+	w.p.Close()
 	for i, j := range w.pool {
 		if j != nil {
 			fmt.Printf("destroying %d\n", i)
 			_ = j.Destroy()
 		}
 	}
+	runner.Destroy()
 }

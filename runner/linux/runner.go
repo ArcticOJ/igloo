@@ -21,14 +21,19 @@ import (
 	"math"
 	"os"
 	"path"
-	"strings"
 	"time"
 )
 
 var (
-	mounts    []mount.Mount
-	symlinks  []container.SymbolicLink
-	cgBuilder *cgroup.Builder
+	mounts              []mount.Mount
+	symlinks            []container.SymbolicLink
+	requiredControllers = &cgroup.Controllers{
+		CPU:    true,
+		CPUSet: true,
+		Memory: true,
+		Pids:   true,
+	}
+	apexCgroup cgroup.Cgroup
 )
 
 type LinuxRunner struct {
@@ -40,37 +45,13 @@ func init() {
 	var e error
 	mounts, symlinks, e = Config.Build()
 	logger.Panic(e, "could not build config for containers")
-	t := cgroup.DetectType()
-	if t != cgroup.CgroupTypeV2 {
-		logger.Logger.Fatal().Msg("cgroup v2 is required but only found v1")
+	ct, e := cgroup.GetAvailableController()
+	if !ct.Contains(requiredControllers) {
+		logger.Logger.Fatal().Strs("expected", requiredControllers.Names()).Strs("got", ct.Names()).Msgf("missing required cgroup controller(s)")
 	}
-	logger.Panic(cgroup.EnableV2Nesting(), "failed to enable cgroup v2 nesting")
-	cgBuilder, e = cgroup.NewBuilder("igloo.slice").
-		WithType(t).
-		WithMemory().
-		WithPids().
-		WithCPU().
-		WithCPUSet().
-		FilterByEnv()
-	logger.Panic(e, "could not initialize cgroup builder")
-	var missingControllers []string
-	if !cgBuilder.CPUSet {
-		missingControllers = append(missingControllers, "cpuset")
-	}
-	if !cgBuilder.CPU {
-		missingControllers = append(missingControllers, "cpu")
-	}
-	if !cgBuilder.Memory {
-		missingControllers = append(missingControllers, "memory")
-	}
-	if !cgBuilder.Pids {
-		missingControllers = append(missingControllers, "pids")
-	}
-	if len(missingControllers) == 0 {
-		return
-	} else {
-		logger.Logger.Fatal().Msgf("missing required cgroup controller(s): %s", strings.Join(missingControllers, ", "))
-	}
+	logger.Panic(cgroup.EnableV2Nesting(), "failed query for available controllers")
+	apexCgroup, e = cgroup.New("igloo.slice", ct)
+	logger.Panic(e, "could not initialize cgroup")
 }
 
 func New(cpu uint16) (r *LinuxRunner, e error) {
@@ -97,6 +78,9 @@ func New(cpu uint16) (r *LinuxRunner, e error) {
 		cb.Stderr = os.Stdout
 	}
 	r = &LinuxRunner{cpu: cpu}
+	if e != nil {
+		return nil, e
+	}
 	r.Environment, e = cb.Build()
 	if e != nil {
 		return nil, e
@@ -147,7 +131,7 @@ func (r *LinuxRunner) Compile(rt runtimes.Runtime, sourceCode string, ctx contex
 	}
 	c, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	cg, e := cgBuilder.Random("compiler-*")
+	cg, e := apexCgroup.Random("compiler-*")
 	if e != nil {
 		return
 	}
@@ -195,7 +179,7 @@ func (r *LinuxRunner) Judge(args []string, config *shared.Config, ctx context.Co
 			return nil, fmt.Errorf("failed to prepare files: %v", err)
 		}
 		defer closeFiles(files)
-		cg, err := cgBuilder.Random("runner-*")
+		cg, err := apexCgroup.Random("runner-*")
 		if err != nil {
 			return nil, err
 		}
@@ -253,6 +237,9 @@ func (r *LinuxRunner) Cleanup() error {
 }
 
 func (r *LinuxRunner) Destroy() error {
-	_ = r.Reset()
-	return r.Destroy()
+	return r.Reset()
+}
+
+func DestroyAll() error {
+	return apexCgroup.Destroy()
 }

@@ -2,9 +2,9 @@ package runner
 
 import (
 	"context"
-	"github.com/ArcticOJ/igloo/v0/models"
 	"github.com/ArcticOJ/igloo/v0/runner/shared"
 	"github.com/ArcticOJ/igloo/v0/runtimes"
+	"github.com/ArcticOJ/polar/v0/types"
 	"github.com/criyle/go-sandbox/runner"
 )
 
@@ -22,16 +22,16 @@ type (
 	}
 )
 
-func Convert(s runner.Status) models.CaseVerdict {
+func Convert(s runner.Status) types.CaseVerdict {
 	switch s {
 	case runner.StatusTimeLimitExceeded:
-		return models.TimeLimitExceeded
+		return types.CaseVerdictTimeLimitExceeded
 	case runner.StatusMemoryLimitExceeded:
-		return models.TimeLimitExceeded
+		return types.CaseVerdictTimeLimitExceeded
 	case runner.StatusOutputLimitExceeded:
-		return models.OutputLimitExceeded
+		return types.CaseVerdictOutputLimitExceeded
 	case runner.StatusNonzeroExitStatus, runner.StatusSignalled, runner.StatusRunnerError:
-		return models.RuntimeError
+		return types.CaseVerdictRuntimeError
 	default:
 		return -1
 	}

@@ -12,3 +12,7 @@ func init() {
 func New(cpu uint16) (Runner, error) {
 	return runner.New(cpu)
 }
+
+func Destroy() error {
+	return runner.DestroyAll()
+}

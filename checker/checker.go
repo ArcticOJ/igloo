@@ -65,5 +65,5 @@ func Check(output string, expected io.ReadCloser) (bool, string) {
 			cntOfMatches++
 		}
 	}
-	return cntOfMatches == cntOfOut, fmt.Sprintf("matched %d out of %d lines", cntOfMatches, cntOfOut)
+	return cntOfMatches == cntOfOut, fmt.Sprintf("matched %d out of %d line(s)", cntOfMatches, cntOfOut)
 }

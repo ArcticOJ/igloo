@@ -11,28 +11,19 @@ type (
 	IglooConfig struct {
 		ID          string
 		CPUs        []uint16
+		Polar       PolarConfig
 		Parallelism uint16 `yaml:"-"`
 		Debug       bool   `yaml:"-"`
 		Key         string
 		Storage     StorageConfig
-		RabbitMQ    RabbitMQConfig
-		// TODO: make caching optional
-		Dragonfly Address
 	}
-	RabbitMQConfig struct {
-		Username   string
-		Password   string
-		Address    `yaml:",inline"`
-		StreamPort uint16 `yaml:"streamPort"`
-		VHost      string
+	PolarConfig struct {
+		Host string
+		Port uint16
 	}
 	StorageConfig struct {
 		Submissions string
 		Problems    string
-	}
-	Address struct {
-		Host string
-		Port uint16
 	}
 )
 
