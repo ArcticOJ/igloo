@@ -42,9 +42,6 @@ func (jc *JudgeRunner) Judge(sub types.Submission, ctx context.Context, announce
 			return &types.FinalResult{Verdict: types.FinalCompileError, CompilerOutput: compOut}
 		}
 		fv, p, e := jc.Run(rt, sub, announce, outPath, callback, ctx)
-		if e != nil {
-
-		}
 		return &types.FinalResult{
 			Verdict:        fv,
 			CompilerOutput: compOut,

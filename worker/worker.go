@@ -136,13 +136,15 @@ func (w *JudgeWorker) Judge(r *_runner, sub types.Submission) {
 	r.currentSubmission.Store(sub.ID)
 	// TODO: immediately halt runner when getting error
 	judge := r.Judge(sub, r.ctx, func(caseId uint16) bool {
-		return prod.Report(types.ResultAnnouncement, caseId) != nil
+		return prod.Report(types.ResultAnnouncement, caseId) == nil
 	}, func(r types.CaseResult) bool {
 		return prod.Report(types.ResultCase, r) == nil
 	})
 	finalResult := judge()
-	// replace actual new line characters with \\n to avoid shattered payloads when serializing response with msgpack
-	finalResult.CompilerOutput = strings.ReplaceAll(finalResult.CompilerOutput, "\n", "\\n")
+	if finalResult != nil {
+		// replace actual new line characters with \\n to avoid shattered payloads when serializing response with msgpack
+		finalResult.CompilerOutput = strings.ReplaceAll(finalResult.CompilerOutput, "\n", "\\n")
+	}
 	prod.Report(types.ResultFinal, finalResult)
 }
 
