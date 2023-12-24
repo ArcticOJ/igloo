@@ -13,7 +13,7 @@ RUN go mod download
 
 COPY .. .
 
-RUN --mount=type=cache,target=/go/pkg/mod --mount=type=bind,target=. for variant in tier1 tier2 tier3; do GOOS=${TARGETOS} GOARCH=${TARGETARCH} make release OUT="./out/igloo.${variant}" VARIANT=${variant}; done
+RUN --mount=type=cache,target=/go/pkg/mod for variant in tier1 tier2 tier3; do GOOS=${TARGETOS} GOARCH=${TARGETARCH} make release OUT="./out/igloo.${variant}" VARIANT=${variant}; done
 
 FROM --platform=${BUILDPLATFORM} alphanecron/judge-env:tier-1 AS igloo-tier-1
 WORKDIR /igloo
