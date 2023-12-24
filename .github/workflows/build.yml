@@ -14,6 +14,12 @@ on:
   workflow_dispatch:
 jobs:
   push:
+    strategy:
+      matrix:
+        variant:
+          - tier-1
+          - tier-2
+          #- tier-3
     name: Push to Docker Hub
     runs-on: ubuntu-latest
     steps:
@@ -28,13 +34,10 @@ jobs:
           images: |
             alphanecron/igloo
           tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha
+            type=ref,event=branch,suffix=-${{ matrix.variant }}
+            type=ref,event=pr,prefix=pr-,suffix=suffix=-${{ matrix.variant }}
+            type=pep440,pattern={{version}},suffix=-${{ matrix.variant }}
+            type=raw,${{ matrix.variant }}
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
       - name: Setup Docker BuildX
@@ -52,6 +55,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           context: .
+          target: ${{ matrix.variant }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
