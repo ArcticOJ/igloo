@@ -5,7 +5,7 @@ tmp_dir = "/tmp"
 [build]
   args_bin = []
   bin = "/tmp/igloo"
-  cmd = "go build -o /tmp/igloo ."
+  cmd = "make dev OUT=/tmp/igloo"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []

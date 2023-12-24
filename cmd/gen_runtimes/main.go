@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ArcticOJ/igloo/v0/logger"
 	"github.com/ArcticOJ/igloo/v0/runtimes"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -28,10 +29,7 @@ func main() {
 		fmt.Printf("'%s' is not available, skipping\n", name)
 	}
 	buf, e := yaml.Marshal(rt)
-	if e != nil {
-		panic(e)
-	}
-	if e := os.WriteFile("runtimes.yml", buf, 0755); e != nil {
-		panic(e)
-	}
+	logger.Panic(e, "could not serialize runtime data")
+	e = os.WriteFile("runtimes.yml", buf, 0755)
+	logger.Panic(e, "unable to write to runtimes.yml")
 }

@@ -75,7 +75,7 @@ func New(cpu uint16) (r *LinuxRunner, e error) {
 		ContainerGID:  Config.GID,
 	}
 	if config.Config.Debug {
-		cb.Stderr = os.Stdout
+		cb.Stderr = os.Stderr
 	}
 	r = &LinuxRunner{cpu: cpu}
 	if e != nil {
@@ -122,13 +122,13 @@ func (r *LinuxRunner) Compile(rt runtimes.Runtime, sourceCode string, ctx contex
 	if e != nil {
 		return
 	}
-	var memLimit uint64 = 256 << 20
 	rl := rlimit.RLimits{
 		CPU: 5,
-		// compilers shouldn't take too much mem
-		Data:        memLimit,
+		// 256MB
+		Data:        256 << 20,
 		DisableCore: true,
 	}
+	// limit at 5 seconds
 	c, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	cg, e := apexCgroup.Random("compiler-*")

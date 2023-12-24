@@ -32,3 +32,5 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 )
+
+//replace github.com/criyle/go-sandbox => /Volumes/SHARED/go-sandbox

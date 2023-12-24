@@ -8,7 +8,6 @@ on:
       - 'go.mod'
       - 'go.sum'
       - 'Dockerfile'
-      - 'docker-compose.yml'
   create:
     tags:
       - v*
@@ -49,7 +48,7 @@ jobs:
       - name: Push to DockerHub
         uses: docker/build-push-action@v4
         with:
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           context: .

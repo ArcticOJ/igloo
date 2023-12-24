@@ -1,29 +1,37 @@
-# TODO: implement tiered docker images
-# tier 1: gcc python3 python2 clang fpc pypy3 go
-# tier 2: more runtimes such as kotlin, java, csharp, etc..
-# tier 3: rarely used languages like brainfuck, whitespace, moo, ...
-
-FROM golang:alpine AS builder
+FROM --platform=${BUILDPLATFORM} golang:alpine AS builder
 WORKDIR /usr/src/app
 
-ARG CGO_ENABLED=0
+ARG TARGETOS
+ARG TARGETARCH
+
+ENV CGO_ENABLED=0
 
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
-RUN go build -o ./out/igloo -ldflags "-s -w" main.go
+COPY .. .
+RUN --mount=type=cache,target=/go/pkg/mod \
+      --mount=type=bind,target=. \
 
-FROM golang:bullseye AS env-tier-1
+RUN for variant in "tier1 tier2 tier3"; do GOOS=${TARGETOS} GOARCH=${TARGETARCH} make release OUT="./out/igloo.${variant}" VARIANT=${variant}; done
 
-ARG DEBIAN_FRONTEND=noninteractive
-
-RUN apt update && apt install -y gcc python3 python2 clang fpc pypy3 && rm -rf /var/lib/apt/lists/*
-
-FROM env-tier-1 AS tier-1
+FROM --platform=${BUILDPLATFORM} alphanecron/judge-env:tier-1 AS igloo-tier-1
 WORKDIR /igloo
 
-COPY --from=builder /usr/src/app/out/igloo ./
+COPY --from=builder /usr/src/app/out/igloo.tier1 ./igloo
 
 ENTRYPOINT ["/igloo/igloo"]
 
+FROM --platform=${BUILDPLATFORM} alphanecron/judge-env:tier-2 AS igloo-tier-2
+WORKDIR /igloo
+
+COPY --from=builder /usr/src/app/out/igloo.tier2 ./igloo
+
+ENTRYPOINT ["/igloo/igloo"]
+
+#FROM --platform=${BUILDPLATFORM} alphanecron/judge-env:tier-3 AS igloo-tier-3
+#WORKDIR /igloo
+#
+#COPY --from=builder /usr/src/app/out/igloo.tier3 ./igloo
+#
+#ENTRYPOINT ["/igloo/igloo"]

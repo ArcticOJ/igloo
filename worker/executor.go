@@ -21,7 +21,7 @@ func (jc *JudgeRunner) Compile(rt runtimes.Runtime, sub types.Submission, ctx co
 	return jc.runner.Compile(rt, srcCode, ctx)
 }
 
-func (jc *JudgeRunner) Run(rt runtimes.Runtime, sub types.Submission, announce func(caseId uint16) bool, prog string, callback func(types.CaseResult) bool, ctx context.Context) (types.FinalVerdict, float64, error) {
+func (jc *JudgeRunner) Run(rt runtimes.Runtime, sub types.Submission, prog string, callback func(types.CaseResult) bool, ctx context.Context) (types.FinalVerdict, float64, error) {
 	cmd, args := rt.BuildExecCommand(prog)
 	c := sub.Constraints
 	// TODO: implement per language time limit
@@ -43,12 +43,10 @@ func (jc *JudgeRunner) Run(rt runtimes.Runtime, sub types.Submission, announce f
 	if e != nil {
 		return types.FinalVerdictInitializationError, p, e
 	}
-	// TODO: stop judging once context is done.
 	for i := uint16(1); i <= sub.TestCount; i++ {
-		announce(i)
 		casePath := path.Join(config.Config.Storage.Problems, sub.ProblemID, strconv.FormatUint(uint64(i), 10))
 		res, e := judge(path.Join(casePath, "input.inp"))
-		if res == nil {
+		if res == nil || e != nil {
 			callback(types.CaseResult{CaseID: i, Verdict: types.CaseVerdictInternalError})
 			continue
 		}

@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"fmt"
+	"github.com/ArcticOJ/igloo/v0/build"
 	"github.com/ArcticOJ/igloo/v0/config"
 	"github.com/ArcticOJ/igloo/v0/logger"
 	"github.com/ArcticOJ/igloo/v0/runner"
@@ -47,9 +48,7 @@ func New(ctx context.Context) (w *JudgeWorker) {
 	if maxCpus/2 < config.Config.Parallelism {
 		logger.Logger.Warn().Msg("running with more than 50% logical cores is not recommended.")
 	}
-
 	w.Connect()
-
 	w.pool = make([]*_runner, config.Config.Parallelism)
 	for i := range w.pool {
 		_ctx, cancel := context.WithCancel(ctx)
@@ -84,7 +83,7 @@ func (w *JudgeWorker) Connect() {
 		OS:          sys.OS,
 		Memory:      sys.Memory,
 		Parallelism: config.Config.Parallelism,
-		Version:     "0.0.1-prealpha",
+		Version:     fmt.Sprintf("%s/%s", build.Version, build.Variant),
 	}
 	for name, rt := range Runtimes {
 		j.Runtimes = append(j.Runtimes, types.Runtime{
@@ -103,7 +102,7 @@ func (w *JudgeWorker) Connect() {
 		}
 		return -1
 	})
-	w.p, e = polar.New(w.ctx, config.Config.Polar.Host, config.Config.Polar.Port, j)
+	w.p, e = polar.New(w.ctx, j)
 	logger.Panic(e, "error creating new polar instance")
 	logger.Logger.Info().Msg("successfully connected to polar")
 }
@@ -130,13 +129,13 @@ func (w *JudgeWorker) Judge(r *_runner, sub types.Submission) {
 	prod, e := w.p.NewProducer(sub.ID)
 	defer prod.Close()
 	if e != nil {
-		//w.consumer.Reject(sub.ID)
+		// prod.Close will be invoked and this submission will be marked as rejected
 		return
 	}
+	// bind this submission to this runner
 	r.currentSubmission.Store(sub.ID)
-	// TODO: immediately halt runner when getting error
-	judge := r.Judge(sub, r.ctx, func(caseId uint16) bool {
-		return prod.Report(types.ResultAnnouncement, caseId) == nil
+	judge := r.Judge(sub, r.ctx, func() bool {
+		return prod.Report(types.ResultAck, nil) == nil
 	}, func(r types.CaseResult) bool {
 		return prod.Report(types.ResultCase, r) == nil
 	})
@@ -144,6 +143,7 @@ func (w *JudgeWorker) Judge(r *_runner, sub types.Submission) {
 	if finalResult != nil {
 		// replace actual new line characters with \\n to avoid shattered payloads when serializing response with msgpack
 		finalResult.CompilerOutput = strings.ReplaceAll(finalResult.CompilerOutput, "\n", "\\n")
+		logger.Logger.Debug().Interface("result", finalResult).Interface("submission", sub).Msg("final result")
 	}
 	prod.Report(types.ResultFinal, finalResult)
 }
@@ -159,7 +159,7 @@ func (w *JudgeWorker) Destroy() {
 	w.p.Close()
 	for i, j := range w.pool {
 		if j != nil {
-			fmt.Printf("destroying %d\n", i)
+			logger.Logger.Info().Msgf("destroying runner #%d", i)
 			_ = j.Destroy()
 		}
 	}

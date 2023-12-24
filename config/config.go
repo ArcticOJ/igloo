@@ -9,21 +9,21 @@ import (
 
 type (
 	IglooConfig struct {
-		ID          string
-		CPUs        []uint16
-		Polar       PolarConfig
-		Parallelism uint16 `yaml:"-"`
-		Debug       bool   `yaml:"-"`
-		Key         string
-		Storage     StorageConfig
+		ID          string        `yaml:"id"`
+		CPUs        []uint16      `yaml:"cpus"`
+		Polar       PolarConfig   `yaml:"polar"`
+		Parallelism uint16        `yaml:"-"`
+		Debug       bool          `yaml:"-"`
+		Storage     StorageConfig `yaml:"storage"`
 	}
 	PolarConfig struct {
-		Host string
-		Port uint16
+		Host   string `yaml:"host"`
+		Port   uint16 `yaml:"port"`
+		Secret string `yaml:"secret"`
 	}
 	StorageConfig struct {
-		Submissions string
-		Problems    string
+		Submissions string `yaml:"submissions"`
+		Problems    string `yaml:"problems"`
 	}
 )
 

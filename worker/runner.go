@@ -26,7 +26,7 @@ func (jc *JudgeRunner) Busy() bool {
 	return jc.isBusy.Load()
 }
 
-func (jc *JudgeRunner) Judge(sub types.Submission, ctx context.Context, announce func(caseId uint16) bool, callback func(types.CaseResult) bool) func() *types.FinalResult {
+func (jc *JudgeRunner) Judge(sub types.Submission, ctx context.Context, notifyAck func() bool, callback func(types.CaseResult) bool) func() *types.FinalResult {
 	jc.isBusy.Store(true)
 	return func() *types.FinalResult {
 		defer func() {
@@ -34,14 +34,18 @@ func (jc *JudgeRunner) Judge(sub types.Submission, ctx context.Context, announce
 			jc.isBusy.Store(false)
 		}()
 		rt := Runtimes[sub.Runtime]
-		if !announce(0) {
-			return nil
+		if !notifyAck() {
+			return &types.FinalResult{Verdict: types.FinalVerdictCancelled}
 		}
 		outPath, compOut, e := jc.Compile(rt, sub, ctx)
 		if e != nil {
+			logger.Logger.Debug().Err(e).Interface("submission", sub).Msg("judging error")
 			return &types.FinalResult{Verdict: types.FinalCompileError, CompilerOutput: compOut}
 		}
-		fv, p, e := jc.Run(rt, sub, announce, outPath, callback, ctx)
+		fv, p, e := jc.Run(rt, sub, outPath, callback, ctx)
+		if e != nil {
+			logger.Logger.Error().Interface("submission", sub).Err(e).Msg("error judging submission")
+		}
 		return &types.FinalResult{
 			Verdict:        fv,
 			CompilerOutput: compOut,
