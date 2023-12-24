@@ -34,10 +34,10 @@ jobs:
           images: |
             alphanecron/igloo
           tags: |
-            type=ref,event=branch,suffix=-${{ matrix.variant }}
             type=ref,event=pr,prefix=pr-,suffix=suffix=-${{ matrix.variant }}
             type=pep440,pattern={{version}},suffix=-${{ matrix.variant }}
             type=raw,${{ matrix.variant }}
+            type=sha,prefix=,suffix=-${{ matrix.variant }}
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
       - name: Setup Docker BuildX
