@@ -6,6 +6,8 @@ ARG TARGETARCH
 
 ENV CGO_ENABLED=0
 
+RUN apk add --no-cache make
+
 COPY go.mod go.sum ./
 RUN go mod download
 
