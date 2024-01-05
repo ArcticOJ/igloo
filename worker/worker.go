@@ -14,7 +14,6 @@ import (
 	"math"
 	"runtime"
 	"slices"
-	"strings"
 	"sync/atomic"
 )
 
@@ -141,8 +140,6 @@ func (w *JudgeWorker) Judge(r *_runner, sub types.Submission) {
 	})
 	finalResult := judge()
 	if finalResult != nil {
-		// replace actual new line characters with \\n to avoid shattered payloads when serializing response with msgpack
-		finalResult.CompilerOutput = strings.ReplaceAll(finalResult.CompilerOutput, "\n", "\\n")
 		logger.Logger.Debug().Interface("result", finalResult).Interface("submission", sub).Msg("final result")
 	}
 	prod.Report(types.ResultFinal, finalResult)

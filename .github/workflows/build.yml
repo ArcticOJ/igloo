@@ -37,7 +37,7 @@ jobs:
             type=ref,event=pr,prefix=pr-,suffix=suffix=-${{ matrix.variant }}
             type=pep440,pattern={{version}},suffix=-${{ matrix.variant }}
             type=raw,${{ matrix.variant }}
-            type=sha,prefix=,suffix=-${{ matrix.variant }}
+            type=sha,prefix=,suffix=_${{ matrix.variant }}
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
       - name: Setup Docker BuildX
