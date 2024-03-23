@@ -1,13 +1,18 @@
 package build
 
-import "strconv"
+import (
+	"fmt"
+	"runtime"
+	"strconv"
+	"time"
+)
 
 var (
-	Version = "dev"
-	Hash    = "unknown"
-	_date   = "0"
-	Date    = 0
-	Variant = "unknown"
+	Version       = "n/a"
+	Hash          = "n/a"
+	_date         = "0"
+	Date    int64 = 0
+	Tag           = "dev"
 )
 
 func init() {
@@ -15,5 +20,10 @@ func init() {
 	if e != nil {
 		return
 	}
-	Date = d
+	Date = int64(d)
+	Version = Tag
+	if Tag == "dev" {
+		Version = fmt.Sprintf("%s#%s@%s", Tag, Hash, time.Unix(Date, 0).Format(time.RFC3339))
+	}
+	Version = fmt.Sprintf("%s with %s", Version, runtime.Version())
 }

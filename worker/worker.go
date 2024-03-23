@@ -8,7 +8,6 @@ import (
 	"cmp"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/ArcticOJ/igloo/v0/build"
 	"github.com/ArcticOJ/igloo/v0/config"
 	"github.com/ArcticOJ/igloo/v0/logger"
@@ -82,7 +81,7 @@ func (w *JudgeWorker) Connect() {
 		Os:          sys.OS,
 		Memory:      sys.Memory,
 		Parallelism: uint32(config.Config.Parallelism),
-		Version:     fmt.Sprintf("%s/%s", build.Version, build.Variant),
+		Version:     build.Version,
 	}
 	for name, rt := range Runtimes {
 		j.Runtimes = append(j.Runtimes, &pb.Judge_Runtime{
