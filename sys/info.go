@@ -19,6 +19,6 @@ func init() {
 	OS = inf.OS.Name
 	BootTimestamp = inf.BootTime
 	mem, e := host.Memory()
-	Memory = mem.Total
 	logger.Panic(e, "could not get host memory info")
+	Memory = mem.Total
 }
