@@ -8,7 +8,7 @@ VERSION = $(shell echo "${TAG}" | sed 's/^.//')
 DEFAULT_ENV = GOOS=linux
 
 DEV_FLAGS = -ldflags "-X '${PKG}/build.Version=${VERSION}' -X '${PKG}/build.Hash=${HASH}' -X '${PKG}/build._date=${DATE}'"
-REL_FLAGS = -ldflags "-X '${PKG}/build.Version=${VERSION}' -X '${PKG}/build.Version=${VERSION}' -X '${PKG}/build.Hash=${HASH}' -X '${PKG}/build._date=${DATE}' -s -w"
+REL_FLAGS = -ldflags "-X '${PKG}/build.Version=${VERSION}' -X '${PKG}/build.Hash=${HASH}' -X '${PKG}/build._date=${DATE}' -s -w"
 
 release: main.go
 	${DEFAULT_ENV} go build ${REL_FLAGS} -o ${OUT}
