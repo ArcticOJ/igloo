@@ -6,8 +6,7 @@ import (
 	"time"
 )
 
-// Memory as KB
-var Memory uint32 = 0
+var Memory uint64 = 0
 
 var OS = "Unknown"
 
@@ -20,6 +19,6 @@ func init() {
 	OS = inf.OS.Name
 	BootTimestamp = inf.BootTime
 	mem, e := host.Memory()
+	Memory = mem.Total
 	logger.Panic(e, "could not get host memory info")
-	Memory = uint32(mem.Total >> 10)
 }

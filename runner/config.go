@@ -22,6 +22,16 @@ func init() {
 type (
 	MountType string
 
+	SubmissionConfig struct {
+		Target      string
+		TimeLimit   float32
+		MemoryLimit uint32
+		OutputLimit uint32
+		StackLimit  uint32
+		OutputFile  string
+		Verbose     bool
+	}
+
 	Mount struct {
 		Type     MountType
 		Source   string

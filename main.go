@@ -6,11 +6,10 @@ import (
 	"github.com/ArcticOJ/igloo/v0/worker"
 	"os"
 	"os/signal"
-	"syscall"
 )
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer stop()
 	w := worker.New(ctx)
 	go func() {

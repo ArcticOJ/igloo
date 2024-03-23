@@ -1,12 +1,9 @@
 id: igloo-1
-cpus: [11,12,13,14,15]
-rabbitmq:
-  username: guest
-  password: guest
+cpus: [0,1]
+polar:
   host: localhost
-  port: 5672
-  streamPort: 5552
-  vhost: arctic
+  port: 8889
+  secretHash: <hash config.polar.secret in arctic.yml with md5>
 storage:
   problems: /path/to/problems
   submissions: /path/to/submissions

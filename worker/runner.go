@@ -4,14 +4,14 @@ import (
 	"context"
 	"github.com/ArcticOJ/igloo/v0/logger"
 	"github.com/ArcticOJ/igloo/v0/runner"
-	"github.com/ArcticOJ/polar/v0/types"
+	"github.com/ArcticOJ/polar/v0/pb"
 	"sync/atomic"
 )
 
 type JudgeRunner struct {
 	boundCpu uint16
 	isBusy   atomic.Bool
-	runner   runner.Runner
+	runner   *runner.Runner
 }
 
 func NewJudge(boundCpu uint16) (r *JudgeRunner) {
@@ -22,39 +22,37 @@ func NewJudge(boundCpu uint16) (r *JudgeRunner) {
 	return
 }
 
-func (jc *JudgeRunner) Busy() bool {
-	return jc.isBusy.Load()
+func (j *JudgeRunner) Busy() bool {
+	return j.isBusy.Load()
 }
 
-func (jc *JudgeRunner) Judge(sub types.Submission, ctx context.Context, notifyAck func() bool, callback func(types.CaseResult) bool) func() *types.FinalResult {
-	jc.isBusy.Store(true)
-	return func() *types.FinalResult {
+func (j *JudgeRunner) Judge(sub *pb.Submission, ctx context.Context, notifyAck func() bool, callback func(*pb.CaseResult) bool) func() *pb.FinalResult {
+	j.isBusy.Store(true)
+	return func() *pb.FinalResult {
 		defer func() {
-			_ = jc.runner.Cleanup()
-			jc.isBusy.Store(false)
+			_ = j.runner.Cleanup()
+			j.isBusy.Store(false)
 		}()
 		rt := Runtimes[sub.Runtime]
 		if !notifyAck() {
-			return &types.FinalResult{Verdict: types.FinalVerdictCancelled}
+			return &pb.FinalResult{Verdict: pb.FinalVerdict_CANCELLED}
 		}
-		outPath, compOut, e := jc.Compile(rt, sub, ctx)
+		outPath, compOut, e := j.Compile(rt, sub, ctx)
 		if e != nil {
 			logger.Logger.Debug().Err(e).Interface("submission", sub).Msg("judging error")
-			return &types.FinalResult{Verdict: types.FinalCompileError, CompilerOutput: compOut}
+			return &pb.FinalResult{Verdict: pb.FinalVerdict_COMPILATION_ERROR, CompilerOutput: compOut}
 		}
-		fv, p, e := jc.Run(rt, sub, outPath, callback, ctx)
+		fv, e := j.Run(rt, sub, outPath, callback, ctx)
 		if e != nil {
 			logger.Logger.Error().Interface("submission", sub).Err(e).Msg("error judging submission")
 		}
-		return &types.FinalResult{
+		return &pb.FinalResult{
 			Verdict:        fv,
 			CompilerOutput: compOut,
-			Points:         p,
-			MaxPoints:      float64(sub.TestCount) * sub.PointsPerTest,
 		}
 	}
 }
 
-func (jc *JudgeRunner) Destroy() error {
-	return jc.runner.Destroy()
+func (j *JudgeRunner) Destroy() error {
+	return j.runner.Destroy()
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog"
 	"gopkg.in/yaml.v2"
 	"os"
+	"strings"
 )
 
 type (
@@ -17,9 +18,9 @@ type (
 		Storage     StorageConfig `yaml:"storage"`
 	}
 	PolarConfig struct {
-		Host   string `yaml:"host"`
-		Port   uint16 `yaml:"port"`
-		Secret string `yaml:"secret"`
+		Host       string `yaml:"host"`
+		Port       uint16 `yaml:"port"`
+		SecretHash string `yaml:"secretHash"`
 	}
 	StorageConfig struct {
 		Submissions string `yaml:"submissions"`
@@ -30,7 +31,11 @@ type (
 var Config = new(IglooConfig)
 
 func init() {
-	b, e := os.ReadFile("igloo.yml")
+	confPath := strings.TrimSpace(os.Getenv("IGLOO_CONFIG_PATH"))
+	if confPath == "" {
+		confPath = "igloo.yml"
+	}
+	b, e := os.ReadFile(confPath)
 	logger.Panic(e, "failed to read config")
 	logger.Panic(yaml.Unmarshal(b, Config), "failed to parse config")
 	Config.Debug = os.Getenv("ENV") == "dev"
